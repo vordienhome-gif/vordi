@@ -1,0 +1,10 @@
+/* kaynak: <style id="vd-polish-style"> (head) */
+/* theme accent (#E8E18D) is unreadable as text on the cream background: use brand brown */
+.button-link.more-items,.js-more-desc,.js-more-prop,.js-hide-form,.header__collections-show-more-text-show,.header__collections-show-more-text-hide{color:#3f3729!important;border-color:#3f3729!important;text-decoration:underline;text-underline-offset:3px}
+[class*=header__collections-show-more] .icon{color:#3f3729!important}
+.notification-product__to-cart,.m-modal-button--checkout{background:#3f3729!important;border-color:#3f3729!important;color:#fff!important}
+.option-value.is-active{border-color:#3f3729!important;box-shadow:inset 0 0 0 1px #3f3729}
+.noUi-connect{background:#3f3729!important}
+.noUi-handle{border-color:#3f3729!important}
+/* page / article text written with a monospace inline font */
+.static-text [style*="font-family"],.article__content [style*="font-family"],.blog-article [style*="font-family"]{font-family:inherit!important}

@@ -1,0 +1,22 @@
+/* kaynak: <style id="vd-chat-style"> (head) */
+.vd-chat{position:fixed;right:20px;bottom:64px;z-index:9995;font-family:inherit}
+.vd-chat-btn{width:58px;height:58px;border-radius:50%;border:0;background:#3f3729;color:#f3dfb3;box-shadow:0 8px 24px rgba(40,30,15,.28);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:transform .2s}
+.vd-chat-btn:hover{transform:scale(1.06)}
+.vd-chat-btn:before{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid #b8925a;animation:vdpulse 2.4s infinite;opacity:0}
+@keyframes vdpulse{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.45);opacity:0}}
+.vd-chat-dot{position:absolute;top:5px;right:5px;width:11px;height:11px;border-radius:50%;background:#3fb46b;border:2px solid #3f3729}
+.vd-chat-tip{position:absolute;right:70px;bottom:14px;white-space:nowrap;background:#fff;color:#3f3729;border:1px solid #e6ded0;border-radius:10px;padding:7px 12px;font-size:13px;box-shadow:0 4px 14px rgba(60,50,30,.12);opacity:0;pointer-events:none;transition:opacity .2s}
+.vd-chat:hover .vd-chat-tip{opacity:1}
+.vd-chat.is-open .vd-chat-tip{display:none}
+.vd-chat-panel{position:absolute;right:0;bottom:72px;width:300px;max-width:calc(100vw - 32px);background:#fff;border:1px solid #e6ded0;border-radius:18px;box-shadow:0 14px 40px rgba(40,30,15,.22);overflow:hidden;transform:translateY(12px);opacity:0;visibility:hidden;transition:all .22s}
+.vd-chat.is-open .vd-chat-panel{transform:none;opacity:1;visibility:visible}
+.vd-chat-head{background:#3f3729;color:#fff;padding:16px 18px 14px}
+.vd-chat-head b{display:block;font-size:16px;margin-bottom:3px}
+.vd-chat-head span{font-size:13px;color:#e8dcc4}
+.vd-chat-list{padding:10px}
+.vd-chat-list a{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:12px;color:#3f3729;text-decoration:none;font-size:15px}
+.vd-chat-list a:hover{background:#faf5ea}
+.vd-chat-list a i{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:0 0 36px;color:#fff}
+.vd-chat-list a small{display:block;font-size:12px;color:#8c7f68}
+.vd-chat-x{position:absolute;right:10px;top:10px;border:0;background:none;color:#e8dcc4;font-size:22px;line-height:1;cursor:pointer}
+@media(max-width:768px){.vd-chat{right:14px;bottom:70px}.vd-chat-btn{width:54px;height:54px}.vd-chat.is-raised{bottom:150px}}

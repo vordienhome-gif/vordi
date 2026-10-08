@@ -1,0 +1,9 @@
+/* kaynak: <style id="vd-cart-style"> (head) */
+.vd-cart{margin:16px 0 0;border:1px solid #e6ded0;border-radius:14px;background:#fff;padding:14px 16px;display:grid;gap:10px;font-size:14px;line-height:1.4;color:#3f3729}
+.vd-cart-i{display:flex;gap:10px;align-items:flex-start}
+.vd-cart-i svg{flex:0 0 18px;margin-top:1px;color:#9a8b6f}
+.vd-cart-i a{color:#8a6d3b;text-decoration:underline}
+.vd-cart-bar{height:6px;border-radius:6px;background:#efe7d6;overflow:hidden;margin-top:6px}
+.vd-cart-bar i{display:block;height:100%;background:#b8925a;border-radius:6px}
+.vd-cart-promo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;border-top:1px solid #efe7d6;padding-top:10px}
+.vd-cart-promo button{border:1px dashed #b8925a;border-radius:10px;background:#faf5ea;color:#3f3729;font:inherit;font-weight:700;padding:8px 12px;cursor:pointer}

@@ -1,0 +1,19 @@
+/* kaynak: <style id="vd-cmp-style"> (head) */
+.widget-type_system_widget_v4_compare_1 .product-form__area-rating{display:none!important}
+.widget-type_system_widget_v4_compare_1 .compare-image-wrapper{max-width:230px}
+.widget-type_system_widget_v4_compare_1 .title-link{display:block;min-height:3.9em;line-height:1.3}
+.vd-cmp-old{margin-left:8px;color:#9a8f7c;text-decoration:line-through;font-size:.85em;font-weight:400}
+.vd-cmp-buy{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:230px;margin:10px 0 6px;padding:10px 12px;border-radius:12px;border:1px solid #3f3729;background:#3f3729;color:#fff!important;font-size:14px;font-weight:600;cursor:pointer;text-decoration:none!important}
+.vd-cmp-buy.is-alt{background:transparent;color:#3f3729!important}
+.vd-cmp-buy.is-done{background:#e9f4ec;border-color:#3fb46b;color:#1d6b3a!important}
+.vd-cmp-buy[disabled]{opacity:.55;cursor:default}
+.widget-type_system_widget_v4_compare_1 .compare-delete{font-size:13px;opacity:.8}
+.vd-cmp-ok{color:#1d6b3a}.vd-cmp-no{color:#a04a3a}
+.vd-cmp-empty{padding:28px 0 10px;font-size:16px;color:#5c5242}.vd-cmp-empty a{display:inline-block;margin-top:14px;padding:11px 20px;border-radius:12px;background:#3f3729;color:#fff!important;text-decoration:none}
+@media(max-width:767px){
+.widget-type_system_widget_v4_compare_1 .js-compare-table .compare-row{grid-template-columns:repeat(var(--vd-n,2),minmax(150px,44vw))!important;column-gap:12px}
+.widget-type_system_widget_v4_compare_1 .compare-clear_block{display:none!important}
+.widget-type_system_widget_v4_compare_1 .compare-row .param-title{grid-column:1/-1;position:sticky;left:0;width:calc(100vw - 32px);font-weight:600;padding:12px 0 2px!important;border:0!important;background:transparent}
+.widget-type_system_widget_v4_compare_1 .compare-image-wrapper{max-width:none}
+.vd-cmp-buy{font-size:13px;padding:9px 8px}
+}

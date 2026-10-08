@@ -1,0 +1,8 @@
+/* kaynak: <style id="vd-filter-style"> (head) */
+@media(max-width:767px){.header .header__area-contacts{display:none!important}}
+.filter.vd-nolive{display:none!important}
+.filter.vd-nolive.is-show-mobile{display:block!important}
+.filter.vd-nolive.is-show-mobile .button_wide__submit{display:flex!important;align-items:center;justify-content:center;background:#3f3729!important;color:#fff!important;border-color:#3f3729!important;font-weight:600}
+.filter.vd-nolive.is-show-mobile .submit_filter{display:none!important}
+body:has(.filter.is-show-mobile) .vd-chat,body:has(.filter.is-show-mobile) .vd-promo{display:none!important}
+.filter-option__field:checked+.filter-option__content .filter-option__btn{background:#3f3729!important;border-color:#3f3729!important}.filter-option__field:checked+.filter-option__content .filter-option__btn:before{opacity:1!important;color:#fff!important}.filter-option__field:checked+.filter-option__content .filter-option__label:not(.count){font-weight:600}

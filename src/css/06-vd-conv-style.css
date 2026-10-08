@@ -1,0 +1,31 @@
+/* kaynak: <style id="vd-conv-style"> (head) */
+html body .header__logo img{filter:none!important}
+.filter.live-submit.is-show-mobile{display:block!important}
+.widget-type_system_widget_v4_promo_slider_19 .promo-slider__item{display:block;border-radius:22px;overflow:hidden;-webkit-mask-image:-webkit-radial-gradient(white,black)}
+.widget-type_system_widget_v4_banner_list_27 .brands__item{border-radius:16px;overflow:hidden}
+.widget-type_system_widget_v4_banner_list_27 img.vd-btile{background:transparent!important;padding:0!important;object-fit:cover!important;border-radius:16px}
+.vd-w-badges:not(.vd-tr-on)>span:first-child{display:none!important}
+.vd-pinfo{margin:14px 0 4px;display:grid;gap:8px;font-size:14px;line-height:1.4;color:#3f3729}
+.vd-pi{display:flex;gap:10px;align-items:flex-start}
+.vd-pi svg{flex:0 0 18px;margin-top:1px;color:#9a8b6f}
+.vd-pi a{color:#8a6d3b;text-decoration:underline}
+.vd-fab{margin:14px 0;border:1px solid #e6ded0;border-radius:14px;background:#fff;padding:0 16px}
+.vd-fab summary{cursor:pointer;list-style:none;padding:14px 0;font-size:15px;font-weight:600;color:#3f3729;display:flex;justify-content:space-between;gap:10px}
+.vd-fab summary::-webkit-details-marker{display:none}
+.vd-fab summary:after{content:"+";font-weight:400;font-size:20px;line-height:1}
+.vd-fab[open] summary:after{content:"−"}
+.vd-fab-w{overflow-x:auto;padding-bottom:14px}
+.vd-fab table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+.vd-fab th,.vd-fab td{text-align:left;padding:8px 10px;border-top:1px solid #efe7d6;vertical-align:top}
+.vd-fab th{font-weight:600;color:#8c7f68;font-size:13px}
+.vd-fab td:first-child{font-weight:600;white-space:nowrap}
+.vd-fab-more{display:inline-block;margin-top:10px;color:#8a6d3b;text-decoration:underline;font-size:14px}
+.vd-promo{position:fixed;left:20px;bottom:20px;z-index:9990;width:300px;max-width:calc(100vw - 32px);background:#fff;border:1px solid #e6ded0;border-radius:16px;box-shadow:0 10px 30px rgba(60,50,30,.18);padding:18px 18px 16px;font-size:14px;color:#3f3729;transform:translateY(20px);opacity:0;transition:opacity .3s,transform .3s}
+.vd-promo.is-on{opacity:1;transform:none}
+.vd-promo-x{position:absolute;right:8px;top:6px;border:0;background:none;font-size:22px;line-height:1;color:#9a8b6f;cursor:pointer;padding:4px}
+.vd-promo-t{font-family:"Playfair Display",Georgia,serif;font-size:22px;font-weight:700;margin:0 24px 4px 0}
+.vd-promo-s{color:#6f6452;margin-bottom:12px}
+.vd-promo-code{width:100%;height:44px;border:1px dashed #b8925a;border-radius:10px;background:#faf5ea;color:#3f3729;font:inherit;font-size:17px;font-weight:700;letter-spacing:1px;cursor:pointer}
+.vd-promo-code span{font-weight:400;font-size:12px;letter-spacing:0;color:#8c7f68;margin-left:6px}
+.vd-promo-tg{display:block;margin-top:10px;color:#8a6d3b;text-decoration:underline;font-size:13px}
+@media(max-width:768px){.vd-promo{left:16px;right:16px;bottom:16px;width:auto}.vd-promo.is-raised{bottom:88px}}
