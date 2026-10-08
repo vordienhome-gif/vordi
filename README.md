@@ -63,7 +63,7 @@ sepet, blog yazısı, iletişim, toptan, markalar).
 
 ## Bilinen eksikler / sonraki adımlar
 
-- 200'ü aşkın `!important` hâlâ duruyor. Çoğu, InSales widget stillerini ezmek için gerekli.
+- Paketlerde 179 `!important` hâlâ duruyor. Çoğu, InSales widget stillerini ezmek için gerekli.
   Bunları temizlemek için ilgili kuralları tema şablonlarının kendisine taşımak gerekir; bu
   aşamada davranış birebir korunsun diye dokunulmadı.
 - Görsel düzeltmeler (masaüstünde slider'ın ortalanmaması, mobilde sohbet düğmesinin slayt
