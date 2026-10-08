@@ -1,0 +1,13 @@
+{
+  "name": "vordi",
+  "version": "0.1.0",
+  "description": "Vordi — stok, alış-satış ve perakende yönetim sistemi",
+  "type": "module",
+  "private": true,
+  "engines": { "node": ">=22.5" },
+  "scripts": {
+    "start": "node server/index.js",
+    "demo": "node server/index.js --demo",
+    "test": "node --test --no-warnings"
+  }
+}
