@@ -32,11 +32,11 @@ CREATE TABLE IF NOT EXISTS products (
   code TEXT NOT NULL DEFAULT '',
   article TEXT NOT NULL DEFAULT '',
   barcode TEXT NOT NULL DEFAULT '',
-  unit TEXT NOT NULL DEFAULT 'adet',
+  unit TEXT NOT NULL DEFAULT 'шт',
   group_id INTEGER REFERENCES product_groups(id) ON DELETE SET NULL,
   buy_price REAL NOT NULL DEFAULT 0,
   sale_price REAL NOT NULL DEFAULT 0,
-  vat REAL NOT NULL DEFAULT 20,
+  vat REAL NOT NULL DEFAULT 22,
   min_stock REAL NOT NULL DEFAULT 0,
   is_service INTEGER NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
@@ -96,6 +96,31 @@ CREATE TABLE IF NOT EXISTS document_lines (
   vat REAL NOT NULL DEFAULT 0,
   position INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS fiscal_receipts (
+  id INTEGER PRIMARY KEY,
+  document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL,
+  uuid TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  total REAL NOT NULL DEFAULT 0,
+  fn_number TEXT NOT NULL DEFAULT '',
+  fd_number TEXT NOT NULL DEFAULT '',
+  fpd TEXT NOT NULL DEFAULT '',
+  receipt_number TEXT NOT NULL DEFAULT '',
+  shift_number TEXT NOT NULL DEFAULT '',
+  fiscal_moment TEXT NOT NULL DEFAULT '',
+  fns_url TEXT NOT NULL DEFAULT '',
+  error TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS fiscal_doc ON fiscal_receipts(document_id);
+CREATE TABLE IF NOT EXISTS api_tokens (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  token_hash TEXT NOT NULL UNIQUE,
+  last_used_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 CREATE INDEX IF NOT EXISTS lines_doc ON document_lines(document_id);
 CREATE INDEX IF NOT EXISTS lines_product ON document_lines(product_id);
 
@@ -121,9 +146,32 @@ export function openDb(file = ':memory:') {
   db.exec('PRAGMA foreign_keys = ON;');
   if (file !== ':memory:') db.exec('PRAGMA journal_mode = WAL;');
   db.exec(SCHEMA);
+  migrate(db);
   if (!db.prepare('SELECT COUNT(*) AS n FROM users').get().n) seedBase(db);
   return db;
 }
+
+// Eski veritabanlarına sonradan eklenen sütunlar.
+function migrate(db) {
+  const has = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
+  if (!has('documents', 'external_id')) db.exec('ALTER TABLE documents ADD COLUMN external_id TEXT');
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS documents_external ON documents(type, external_id) WHERE external_id IS NOT NULL');
+  const def = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
+  for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) def.run(k, v);
+}
+
+export const DEFAULT_SETTINGS = {
+  company_name: 'Моя компания',
+  currency: '₽',
+  default_vat: '22',
+  retail_counterparty_id: '1',
+  fiscal_mode: 'off',
+  atol_url: 'http://127.0.0.1:16732',
+  tax_system: 'osn',
+  cashier_name: '',
+  cashier_inn: '',
+  shop_warehouse_id: '',
+};
 
 export function tx(db, fn) {
   db.exec('BEGIN');
@@ -140,12 +188,8 @@ export function tx(db, fn) {
 function seedBase(db) {
   tx(db, () => {
     db.prepare('INSERT INTO users (username, name, password_hash, role) VALUES (?, ?, ?, ?)')
-      .run('admin', 'Yönetici', hashPassword('admin'), 'admin');
-    db.prepare('INSERT INTO warehouses (name) VALUES (?)').run('Ana depo');
-    db.prepare("INSERT INTO counterparties (name, kind, roles) VALUES (?, 'person', 'customer')").run('Perakende müşteri');
-    const set = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)');
-    set.run('company_name', 'Şirketim');
-    set.run('currency', '₺');
-    set.run('retail_counterparty_id', '1');
+      .run('admin', 'Администратор', hashPassword('admin'), 'admin');
+    db.prepare('INSERT INTO warehouses (name) VALUES (?)').run('Основной склад');
+    db.prepare("INSERT INTO counterparties (name, kind, roles) VALUES (?, 'person', 'customer')").run('Розничный покупатель');
   });
 }

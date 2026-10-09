@@ -5,12 +5,13 @@ import { fileURLToPath } from 'node:url';
 import { openDb } from './db.js';
 import { matchRoute } from './api.js';
 import { userFromToken } from './auth.js';
+import { tokenUser } from './publicapi.js';
 import { seedDemo } from './demo.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
-  '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json', '.webmanifest': 'application/manifest+json',
 };
 const MAX_BODY = 5 * 1024 * 1024;
 
@@ -45,9 +46,12 @@ export function createApp(db) {
       if (url.pathname.startsWith('/api/')) {
         const match = matchRoute(req.method, url.pathname);
         if (!match) return send(res, 404, { error: 'Bulunamadı' });
-        const token = cookieToken(req);
-        const user = userFromToken(db, token);
-        if (!match.route.public && !user) return send(res, 401, { error: 'Oturum açmanız gerekiyor' });
+        // /api/v1 uç noktaları "Authorization: Bearer <token>" ile, diğerleri oturum çereziyle korunur.
+        const token = match.route.token ? null : cookieToken(req);
+        const user = match.route.token ? tokenUser(db, req.headers.authorization) : userFromToken(db, token);
+        if (!match.route.public && !user) {
+          return send(res, 401, { error: match.route.token ? 'Geçersiz API anahtarı' : 'Oturum açmanız gerekiyor' });
+        }
         const headers = {};
         const body = req.method === 'GET' ? {} : await readBody(req);
         const result = await match.route.handler({
@@ -76,6 +80,7 @@ export function createApp(db) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  process.env.TZ ??= 'Europe/Moscow';
   const file = process.env.DB_FILE ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'data', 'vordi.db');
   if (file !== ':memory:') await mkdir(dirname(file), { recursive: true });
   const db = openDb(file);

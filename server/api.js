@@ -1,6 +1,8 @@
 import { DOC_TYPES, ACCOUNTS, EXPENSE_CATEGORIES } from './doctypes.js';
 import { tx } from './db.js';
 import { hashPassword, verifyPassword, createSession } from './auth.js';
+import { startReceipt, finishReceipt, shiftTask, TAX_SYSTEMS, FISCAL_MODES } from './fiscal.js';
+import { publicRoutes, createToken } from './publicapi.js';
 import {
   HttpError, listDocuments, getDocument, saveDocument, deleteDocument, deriveDocument, nextNumber,
 } from './documents.js';
@@ -156,12 +158,16 @@ export const routes = [
   ['GET', '/api/me', ({ user }) => user],
   ['GET', '/api/meta', ({ db }) => ({
     docTypes: DOC_TYPES, accounts: ACCOUNTS, categories: EXPENSE_CATEGORIES, settings: settingsObj(db),
+    taxSystems: TAX_SYSTEMS, fiscalModes: FISCAL_MODES,
   })],
   ['GET', '/api/settings', ({ db }) => settingsObj(db)],
   ['PUT', '/api/settings', ({ db, user, body }) => {
     requireAdmin(user);
     const up = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
-    for (const k of ['company_name', 'currency', 'company_address', 'company_tax_no', 'retail_counterparty_id']) {
+    if ('fiscal_mode' in body && !FISCAL_MODES.includes(body.fiscal_mode)) throw new HttpError(400, 'Geçersiz kasa modu');
+    if ('tax_system' in body && !TAX_SYSTEMS.includes(body.tax_system)) throw new HttpError(400, 'Geçersiz vergi sistemi');
+    for (const k of ['company_name', 'currency', 'company_address', 'company_tax_no', 'company_kpp', 'retail_counterparty_id',
+      'default_vat', 'fiscal_mode', 'atol_url', 'tax_system', 'cashier_name', 'cashier_inn', 'shop_warehouse_id']) {
       if (k in body) up.run(k, String(body[k]));
     }
     return settingsObj(db);
@@ -205,6 +211,21 @@ export const routes = [
   ['PUT', '/api/documents/:id', ({ db, user, body, params }) => saveDocument(db, body, user.id, Number(params.id))],
   ['DELETE', '/api/documents/:id', ({ db, params }) => { deleteDocument(db, Number(params.id)); return { ok: true }; }],
 
+  ['POST', '/api/documents/:id/fiscal/:kind', ({ db, params }) => startReceipt(db, Number(params.id), params.kind, settingsObj(db))],
+  ['POST', '/api/fiscal/:id/result', ({ db, params, body }) => finishReceipt(db, Number(params.id), body)],
+  ['GET', '/api/fiscal/shift/:kind', ({ db, params }) => shiftTask(params.kind, settingsObj(db))],
+
+  ['GET', '/api/tokens', ({ db, user }) => {
+    requireAdmin(user);
+    return db.prepare('SELECT id, name, last_used_at, created_at FROM api_tokens ORDER BY id').all();
+  }],
+  ['POST', '/api/tokens', ({ db, user, body }) => { requireAdmin(user); return createToken(db, body.name); }],
+  ['DELETE', '/api/tokens/:id', ({ db, user, params }) => {
+    requireAdmin(user);
+    db.prepare('DELETE FROM api_tokens WHERE id = ?').run(Number(params.id));
+    return { ok: true };
+  }],
+
   ['GET', '/api/dashboard', ({ db }) => dashboard(db)],
   ['GET', '/api/reports/stock', ({ db, query }) => stockReport(db, query)],
   ['GET', '/api/reports/turnover', ({ db, query }) => turnoverReport(db, query)],
@@ -223,10 +244,11 @@ export const routes = [
     ['PUT', `/api/${name}/:id`, ({ db, body, params }) => entitySave(db, name, body, Number(params.id))],
     ['DELETE', `/api/${name}/:id`, ({ db, params }) => entityDelete(db, name, Number(params.id))],
   ]),
+  ...publicRoutes.map((r) => [...r, { token: true }]),
 ].map(([method, pattern, handler, opts = {}]) => {
   const keys = [];
   const re = new RegExp('^' + pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; }) + '$');
-  return { method, re, keys, handler, public: !!opts.public };
+  return { method, re, keys, handler, public: !!opts.public, token: !!opts.token };
 });
 
 export function matchRoute(method, path) {

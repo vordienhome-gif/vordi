@@ -1,8 +1,8 @@
 import { DOC_TYPES, caseBy, inList } from './doctypes.js';
-import { dayAfter } from './documents.js';
+import { dayAfter, localDay } from './documents.js';
 
 const round2 = (v) => Math.round(v * 100) / 100;
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => localDay();
 const monthStart = () => today().slice(0, 8) + '01';
 
 // Ağırlıklı ortalama alış maliyeti (mal kabul + giriş belgelerinden), yoksa kart alış fiyatı.

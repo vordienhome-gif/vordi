@@ -140,3 +140,27 @@ table.lines td { padding: 4px 6px; }
 .linked a { margin-right: 12px; }
 .tabs { display: flex; gap: 4px; margin-bottom: 10px; }
 .tabs button.active { background: var(--row-hover); border-color: var(--primary); color: var(--primary); }
+
+/* Dil seçici, kod blokları */
+.topbar select.lang { background: transparent; color: var(--header-text); border-color: rgba(255,255,255,.3); padding: 4px 6px; }
+.topbar select.lang option { color: var(--text); }
+pre.code { background: #f7f9fc; border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; font-size: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+table.lines select { width: 100%; padding: 4px; }
+
+/* Telefon ve tablet */
+@media (max-width: 700px) {
+  main { padding: 10px; }
+  .topbar { padding: 0 8px; }
+  .brand { padding-right: 6px; }
+  .userbox .who { display: none; }
+  .topbar { flex-wrap: wrap; height: auto; padding-top: 6px; }
+  .brand { height: 36px; }
+  .userbox { margin-left: auto; }
+  .topnav { order: 3; flex-basis: 100%; height: 40px; }
+  .kpis { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi .value { font-size: 17px; }
+  .page-head h1 { font-size: 17px; }
+  .toolbar input[style*="width"] { width: 100% !important; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .pos-screen .tiles { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}

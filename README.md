@@ -1,7 +1,10 @@
-# Vordi — Stok ve Ticaret Yönetimi
+# Vordi — Stok ve Ticaret Yönetimi · Склад, продажи, розница
 
 MoySklad tarzı bulut stok/ticaret yönetim sistemlerinin iş mantığını örnek alan, bağımsız bir uygulama.
 Küçük ve orta ölçekli işletmeler için alış, satış, depo, cari hesap, kasa/banka ve perakende (POS) süreçlerini tek yerde toplar.
+Rusya'da kullanım için hazırlanmıştır: arayüz **Rusça ve Türkçe**, ₽ ve Rus НДС oranları, 54-ФЗ online kasa (АТОЛ) ve internet mağazası API'si.
+
+Сервис учёта для малого бизнеса: склад, закупки, продажи, взаиморасчёты, деньги и розничная касса. Интерфейс на русском и турецком языках.
 
 > Vordi, MoySklad'ın kodunu, tasarımını veya markasını kullanmaz; aynı türden iş akışlarını sıfırdan uygular.
 
@@ -16,7 +19,10 @@ Küçük ve orta ölçekli işletmeler için alış, satış, depo, cari hesap, 
 | **Depo işlemleri** | Giriş, zayiat, depolar arası transfer, sayım (fark otomatik hesaplanır), çoklu depo |
 | **Raporlar** | Stok bakiyeleri (stok, rezerv, beklenen, kullanılabilir, maliyet ve satış değeri), dönemsel stok hareketleri, cari hesaplar ve hesap ekstresi, kasa/banka akışı |
 | **Para** | Gelen/giden ödemeler, Kasa ve Banka hesapları, gider kategorileri |
-| **Perakende** | Barkod okuyuculu POS satış ekranı, nakit/kart ödeme |
+| **Perakende** | Barkod okuyuculu POS satış ekranı, nakit/kart ödeme, 54-ФЗ fişi (АТОЛ Web Server), vardiya açma/kapama, X/Z raporları |
+| **Entegrasyonlar** | İnternet mağazası için token korumalı REST API (ürün, stok, sipariş) — bkz. [docs/API.md](docs/API.md) |
+| **Rusya** | ₽, НДС 22/20/10/7/5/0 % ve "без НДС", ИНН/КПП, СНО (ОСН, УСН, ЕСХН, Патент), Moskova saati |
+| **Dil ve mobil** | Rusça / Türkçe dil seçici; telefona kurulabilen PWA, telefon ekranına uyumlu düzen |
 | **Genel** | Belgeden bağlı belge oluşturma (sipariş → sevkiyat → tahsilat), taslak/işlendi durumu, belge kopyalama, yazdırma, çok kullanıcılı giriş (yönetici / kullanıcı) |
 
 ### İş kuralları
@@ -43,6 +49,9 @@ Ortam değişkenleri:
 
 - `PORT` — dinlenecek port (varsayılan `3000`)
 - `DB_FILE` — SQLite dosyası (varsayılan `data/vordi.db`)
+- `TZ` — saat dilimi (varsayılan `Europe/Moscow`)
+
+Kasa entegrasyonunu cihaz olmadan denemek için *Ayarlar → Kasa ve entegrasyonlar* bölümünde "Test modu"nu seçin.
 
 ## Mimari
 
@@ -55,18 +64,17 @@ server/
   documents.js  Belge kaydetme, numaralama, bağlı belge üretimi
   reports.js    Stok, hareket, kârlılık, cari, para raporları ve göstergeler
   auth.js       scrypt ile şifreleme, oturumlar
+  fiscal.js     54-ФЗ kasa fişi görevleri (АТОЛ JSON, ФФД 1.2)
+  publicapi.js  İnternet mağazası API'si (/api/v1) ve API anahtarları
   demo.js       Örnek veri
-public/         Bağımlılıksız tek sayfalık arayüz (HTML + CSS + JS)
-test/           node:test ile API testleri
+public/
+  app.js        Bağımlılıksız tek sayfalık arayüz
+  i18n.js       Çeviri katmanı; lang/ru.js Rusça sözlük
+  sw.js         PWA (çevrim dışı uygulama kabuğu)
+docs/           API rehberi (RU) ve yol haritası (TR)
+test/           node:test ile API, entegrasyon ve çeviri testleri
 ```
 
 ## Yol haritası
 
-MoySklad'ın kapsamına yaklaşmak için sıradaki adımlar:
-
-- Ürün varyantları (beden/renk), setler ve üretim (reçete) belgeleri
-- e-Fatura / e-Arşiv entegrasyonu
-- Fiyat listeleri, indirimler, çoklu para birimi
-- Pazaryeri ve e-ticaret entegrasyonları (Trendyol, Hepsiburada, Shopify…)
-- Ayrıntılı rol/izin yönetimi, işlem geçmişi (audit log)
-- Seri/parti ve son kullanma tarihi takibi, FIFO maliyet
+МойСклад seviyesine giden adımlar, yasal gereklilikler (152-ФЗ, Честный знак, ЕГАИС, ЭДО) ve öncelik soruları için: [docs/YOL-HARITASI.md](docs/YOL-HARITASI.md)

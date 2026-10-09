@@ -12,7 +12,10 @@ const num = (v, d = 0) => (v === '' || v == null || Number.isNaN(Number(v)) ? d 
 const idOrNull = (v) => (v === '' || v == null ? null : Number(v));
 const round2 = (v) => Math.round(v * 100) / 100;
 
-export const nowMoment = () => new Date().toISOString().slice(0, 16).replace('T', ' ');
+// Sunucunun yerel saati (TZ ortam değişkeni, varsayılan Europe/Moscow).
+const pad = (n) => String(n).padStart(2, '0');
+export const localDay = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const nowMoment = (d = new Date()) => `${localDay(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
 export function nextNumber(db, type) {
   const r = db.prepare(
@@ -65,9 +68,13 @@ export function getDocument(db, id) {
   ).get(id);
   if (!doc) throw new HttpError(404, 'Belge bulunamadı');
   doc.lines = db.prepare(
-    `SELECT l.id, l.product_id, l.qty, l.actual_qty, l.price, l.vat, p.name AS product, p.code, p.article, p.unit
+    `SELECT l.id, l.product_id, l.qty, l.actual_qty, l.price, l.vat, p.name AS product, p.code, p.article, p.unit,
+            p.is_service
      FROM document_lines l JOIN products p ON p.id = l.product_id
      WHERE l.document_id = ? ORDER BY l.position, l.id`,
+  ).all(id);
+  doc.fiscal = db.prepare(
+    'SELECT * FROM fiscal_receipts WHERE document_id = ? ORDER BY id',
   ).all(id);
   doc.linked = db.prepare(
     `SELECT id, type, number, moment, sum, posted FROM documents
