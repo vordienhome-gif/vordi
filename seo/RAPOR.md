@@ -57,12 +57,21 @@ Bir daha gelmeyecekler en yakın kategoriye 301 ile yönlendirilsin.
 | Açıklama "ванная" diyor ama ürün banyo için değil (kapı paspası, oda halısı) | 16 |
 
 En sık tekrar eden kalıp cümleler 100–220 üründe birebir aynı geçiyor ("Оплата онлайн: СБП…",
-"Рекомендации по уходу общие…"). Ürün bazında hata listesi `seo/out/product_issues.csv` dosyasında.
+"Рекомендации по уходу общие…"). Ürün bazında hata listesi `seo/out/product_issues.csv` dosyasında: 699 üründe toplam 1.539 olgu
+hatası veya çelişki var.
 Örnekler:
 - Блендер Bosch: özelliklerde "Материал: Лён".
 - Velur halat: bileşim toplamı %120.
 - Limasso ürünü: "Бренд: Exclusive".
 - Vantuzlu küvet paspası "мягкий ворс, впитывает влагу" diye anlatılmış.
+
+**Önce / sonra örneği:**
+
+| | Şu an | Yeni |
+|---|---|---|
+| Ad | Халат женский NUSA Niki Kadife 0519, велюр | Халат женский велюровый NUSA «Niki Kadife» 0519 |
+| Title | Халат женский NUSA Niki Kadife 0519, велюр — купить в интернет-магазине Vordien Home | Халат женский велюровый NUSA Niki Kadife 0519 — купить \| Vordien Home |
+| Açıklama | Şablon cümleler, bileşim toplamı %120, "Банный банный халат" | Ürüne özgü 3 paragraf + doğrulanmış özellik listesi; çelişkili bileşim metne alınmadı, hata listesine yazıldı |
 
 ## 4. Arama talebi (Yandex/Google öneri sorguları)
 

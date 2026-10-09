@@ -68,3 +68,18 @@ sepet, blog yazısı, iletişim, toptan, markalar).
   aşamada davranış birebir korunsun diye dokunulmadı.
 - Görsel düzeltmeler (masaüstünde slider'ın ortalanmaması, mobilde sohbet düğmesinin slayt
   metnine binmesi, "АКЦИИ" başlığı) ayrı bir commit olarak `src/css/` altına eklenecek.
+
+## SEO paketi (`seo/`)
+
+Rapor: [`seo/RAPOR.md`](seo/RAPOR.md). InSales'e yüklenecek dosyalar `seo/out/` altında.
+
+| Araç | Ne yapar |
+|---|---|
+| `seo/tools/audit_products.py <prod_klasörü>` | Ürün JSON'larını denetler → `seo/out/audit_products.csv` |
+| `seo/tools/make_batches.py` | Ürünleri içerik üretimi için partilere böler |
+| `seo/tools/build_import.py <sonuç_klasörü> <products.json>` | Üretilen içerikten `products_seo.xlsx/csv` ve `product_issues.csv` üretir |
+| `seo/tools/build_categories.py seo/data/categories_out.json velyurovye-halaty` | Kategori dosyalarını üretir |
+
+İçerik kuralları: `seo/guidelines.md` (ürün), `seo/category_guidelines.md` (kategori).
+Ürün verisi `https://vordien.ru/collection/all.json` ve `https://vordien.ru/product/<handle>.json`
+uçlarından alınır.
