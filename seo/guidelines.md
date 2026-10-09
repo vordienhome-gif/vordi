@@ -28,7 +28,7 @@ Formül: **[Ürün tipi] [cinsiyet/oda/amaç] [ana özellik: kumaş] [Marka] [mo
 
 ## Title (`title`, ≤ 70 karakter tercihen)
 `{Ad (gerekirse kısaltılmış)} — купить в интернет-магазине Vordien Home`
-Ad 45 karakteri aşıyorsa sonek: ` — купить | Vordien Home`.
+Ad 45 karakteri aşıyorsa sonek: ` — купить | Vordien Home`. Title **asla 75 karakteri aşmaz**; gerekirse adı kısalt (renk/adet çıkar).
 
 ## Meta description (`meta_description`, 140–160 karakter)
 Ürünün 1–2 somut özelliği + fayda + mağaza vaadi. Örnek:
@@ -61,3 +61,18 @@ diğer kategorilerde 400–900. Yapı:
 ## Özellik doldurma (`characteristics_fill`)
 Verilerde açıkça geçen ama "Характеристики" alanında eksik olan değerleri öner: Бренд, Цвет, Размер,
 Состав, Ткань, Пол, Страна производства. Emin değilsen boş bırak.
+
+## Netleştirmeler (pilot partisinden)
+- Paspas/halı (ворсовые коврики) tekstil sayılır (700–1300 karakter); vantuzlu banyo paspası, elektronik,
+  kozmetik, kimyasal "diğer" (400–900).
+- El/ayak bakımı için bağlantı: /collection/uhod-za-rukami-i-nogami; vücut: /collection/uhod-za-telom;
+  kişisel hijyen: /collection/lichnaya-gigiena; kadın giyim: /collection/zhenskaya-odezhda;
+  erkek giyim: /collection/muzhskaya-odezhda; spor takım: /collection/zhenskiy-sportivnyy-kostyum.
+- Ürün URL'sindeki (slug) bilgiler veri sayılır ama çelişkiliyse kullanma, `issues`'a yaz.
+- Ad ile bir özellik çelişiyorsa ve ad + açıklama birbirini doğruluyorsa ad/açıklamadaki değeri kullan,
+  çelişkiyi `issues`'a yaz.
+- Kanıtsız iddialar ("не вызывает аллергии", "премиум", "лучший") yeni metne alınmaz ve `issues`'a yazılır.
+- `characteristics_fill` yalnızca şu anahtarlar: Бренд, Цвет, Размер, Состав, Ткань, Материал, Пол,
+  Страна производства, Количество в упаковке. Model/seri/hacim açıklamadaki listeye girer.
+- Marka yazımı tutarsızsa (BOSCH/Bosch, ZALEL/Zalel) yeni metinde doğru yazımı kullan; bunu her üründe
+  `issues`'a yazma (rapora toplu olarak girecek).
