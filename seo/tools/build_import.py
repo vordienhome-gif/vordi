@@ -43,6 +43,8 @@ def main(res_dir, products_json):
     current = {str(p["id"]): p for p in json.load(open(products_json))}
     results = {}
     for f in sorted(glob.glob(f"{res_dir}/*.json")):
+        if not re.fullmatch(r"(batch|pilot)_\d+\.json", pathlib.Path(f).name):
+            continue
         for r in json.load(open(f)):
             results[str(r["id"])] = r
     rows, issues, warns = [], [], []
