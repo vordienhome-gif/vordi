@@ -13,17 +13,28 @@ const round2 = (v) => Math.round(v * 100) / 100;
 const operator = (s) => ({ name: s.cashier_name || 'Кассир', ...(s.cashier_inn ? { vatin: s.cashier_inn } : {}) });
 
 export function receiptTask(db, doc, kind, uuid, s) {
-  const items = doc.lines.map((l) => ({
+  const position = (l, quantity, extra = {}) => ({
     type: 'position',
     name: String(l.product).slice(0, 128),
     price: l.price,
-    quantity: l.qty,
-    amount: round2(l.qty * l.price),
+    quantity,
+    amount: round2(quantity * l.price),
     tax: { type: VAT_TAG[l.vat] ?? 'none' }, // vat < 0 → "без НДС"
-    paymentObject: l.is_service ? 'service' : 'commodity',
+    paymentObject: l.is_service ? 'service' : l.codes?.length ? 'commodityWithMarking' : 'commodity',
     paymentMethod: 'fullPayment',
     measurementUnit: 0, // ФФД 1.2, тег 2108: 0 = штуки
-  }));
+    ...extra,
+  });
+  // Markalı ürün: her kod ayrı bir pozisyon (miktar 1), kod imcParams içinde base64 olarak.
+  // Alan adları АТОЛ JSON görev formatına (ДТО 10, ФФД 1.2) göredir; gerçek cihazda doğrulanmalıdır.
+  const items = doc.lines.flatMap((l) => (l.codes?.length
+    ? l.codes.map((code) => position(l, 1, { imcParams: {
+      imcType: 'auto',
+      imc: Buffer.from(code, 'utf8').toString('base64'),
+      itemEstimatedStatus: kind === 'sellReturn' ? 'itemPieceReturn' : 'itemPieceSold',
+      imcModeProcessing: 0,
+    } }))
+    : [position(l, l.qty)]));
   return {
     uuid,
     request: [{

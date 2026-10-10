@@ -7,6 +7,7 @@ import { matchRoute } from './api.js';
 import { userFromToken } from './auth.js';
 import { tokenUser } from './publicapi.js';
 import { seedDemo } from './demo.js';
+import { syncAll } from './channels/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const MIME = {
@@ -73,8 +74,9 @@ export function createApp(db) {
       res.end(data);
     } catch (e) {
       const status = e.status ?? (e.code === 'ERR_SQLITE_ERROR' && /constraint/i.test(e.message) ? 400 : 500);
-      if (status >= 500) console.error(e);
-      send(res, status, { error: status >= 500 ? 'Sunucu hatası' : e.message });
+      // Beklenmeyen hatalar gizlenir; bilinçli HttpError (ör. 502 kanal hatası) mesajıyla döner.
+      if (!e.status) console.error(e);
+      send(res, status, { error: e.status ? e.message : 'Sunucu hatası' });
     }
   });
 }
@@ -86,6 +88,15 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const db = openDb(file);
   if (process.argv.includes('--demo')) seedDemo(db);
   const port = Number(process.env.PORT ?? 3000);
+  // Satış kanallarını (InSales, Ozon, WB, Яндекс Маркет) düzenli aralıklarla senkronize et.
+  let syncing = false;
+  setInterval(async () => {
+    const minutes = Number(db.prepare("SELECT value FROM settings WHERE key = 'channel_sync_minutes'").get()?.value) || 0;
+    const due = minutes > 0 && Math.floor(Date.now() / 60000) % minutes === 0;
+    if (!due || syncing) return;
+    syncing = true;
+    try { await syncAll(db); } finally { syncing = false; }
+  }, 60000).unref();
   createApp(db).listen(port, () => {
     console.log(`Vordi çalışıyor: http://localhost:${port}  (varsayılan giriş: admin / admin)`);
   });

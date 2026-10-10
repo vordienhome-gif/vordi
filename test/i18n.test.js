@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import RU from '../public/lang/ru.js';
 import { DOC_TYPES, ACCOUNTS, EXPENSE_CATEGORIES } from '../server/doctypes.js';
+import { ADAPTERS } from '../server/channels/index.js';
 
 const app = readFileSync(new URL('../public/app.js', import.meta.url), 'utf8');
 
@@ -14,17 +15,27 @@ function sourceKeys() {
   const menu = block(/const MENU = \[([\s\S]*?)\n\];/);
   for (const s of menu.matchAll(/title: '([^']+)'/g)) keys.add(s[1]);
   for (const s of menu.matchAll(/\['#[^']*', '([^']+)'\]/g)) keys.add(s[1]);
-  for (const re of [/ROLE_LABEL = \{([^}]*)\}/, /SHIFT_LABEL = \{([^}]*)\}/, /FISCAL_MODE_LABEL = \{([^}]*)\}/]) {
+  for (const re of [/MARKING_LABEL = \{([^}]*)\}/, /ROLE_LABEL = \{([^}]*)\}/, /SHIFT_LABEL = \{([^}]*)\}/, /FISCAL_MODE_LABEL = \{([^}]*)\}/]) {
     for (const s of block(re).matchAll(/: '([^']+)'/g)) if (s[1] !== '—') keys.add(s[1]);
   }
   keys.add('KDV yok');
   for (const u of block(/\[('adet'[^\]]*)\]/).matchAll(/'([^']+)'/g)) keys.add(u[1]);
   for (const t of Object.values(DOC_TYPES)) [t.title, t.single, ...(t.statuses ?? [])].forEach((k) => keys.add(k));
   [...ACCOUNTS, ...EXPENSE_CATEGORIES].forEach((k) => keys.add(k));
-  const dir = new URL('../server/', import.meta.url);
-  for (const f of readdirSync(dir)) {
-    const s = readFileSync(new URL(f, dir), 'utf8');
+  for (const a of Object.values(ADAPTERS)) for (const f of a.fields) keys.add(f.label);
+  const files = [];
+  for (const sub of ['../server/', '../server/channels/']) {
+    const dir = new URL(sub, import.meta.url);
+    for (const f of readdirSync(dir)) if (f.endsWith('.js')) files.push(new URL(f, dir));
+  }
+  for (const file of files) {
+    const s = readFileSync(file, 'utf8');
     for (const m of s.matchAll(/HttpError\(\d+, '([^']+)'/g)) keys.add(m[1]);
+    for (const m of s.matchAll(/reason: '([^']+)'/g)) keys.add(m[1]);
+    for (const m of s.matchAll(/(?:HttpError\(\d+, |ChannelError\(|log\(db, [^,]+, )`([^`]+)`/g)) {
+      let i = 0;
+      keys.add(m[1].replace(/\$\{[^}]+\}/g, () => `{${i++}}`));
+    }
   }
   return keys;
 }

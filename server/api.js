@@ -3,6 +3,8 @@ import { tx } from './db.js';
 import { hashPassword, verifyPassword, createSession } from './auth.js';
 import { startReceipt, finishReceipt, shiftTask, TAX_SYSTEMS, FISCAL_MODES } from './fiscal.js';
 import { publicRoutes, createToken } from './publicapi.js';
+import { checkCodes, codeStatus, parseCode, MARKING_TYPES } from './marking.js';
+import { channelTypes, listChannels, saveChannel, syncChannel, mapChannel, channelLog } from './channels/index.js';
 import {
   HttpError, listDocuments, getDocument, saveDocument, deleteDocument, deriveDocument, nextNumber,
 } from './documents.js';
@@ -15,7 +17,7 @@ import {
 const ENTITIES = {
   products: {
     fields: {
-      name: 'text', code: 'text', article: 'text', barcode: 'text', unit: 'text', group_id: 'ref',
+      name: 'text', code: 'text', article: 'text', barcode: 'text', unit: 'text', group_id: 'ref', marking: 'text',
       buy_price: 'num', sale_price: 'num', vat: 'num', min_stock: 'num', is_service: 'bool',
       description: 'text', archived: 'bool',
     },
@@ -136,6 +138,7 @@ function importProducts(db, rows) {
   return { created, updated };
 }
 
+const maskSettings = (s) => ({ ...s, cz_token: s.cz_token ? '••••••' + s.cz_token.slice(-4) : '' });
 const settingsObj = (db) => Object.fromEntries(db.prepare('SELECT key, value FROM settings').all().map((r) => [r.key, r.value]));
 
 function requireAdmin(user) {
@@ -157,20 +160,22 @@ export const routes = [
   }, { public: true }],
   ['GET', '/api/me', ({ user }) => user],
   ['GET', '/api/meta', ({ db }) => ({
-    docTypes: DOC_TYPES, accounts: ACCOUNTS, categories: EXPENSE_CATEGORIES, settings: settingsObj(db),
-    taxSystems: TAX_SYSTEMS, fiscalModes: FISCAL_MODES,
+    docTypes: DOC_TYPES, accounts: ACCOUNTS, categories: EXPENSE_CATEGORIES, settings: maskSettings(settingsObj(db)),
+    taxSystems: TAX_SYSTEMS, fiscalModes: FISCAL_MODES, markingTypes: MARKING_TYPES, channelTypes: channelTypes(),
   })],
-  ['GET', '/api/settings', ({ db }) => settingsObj(db)],
+  ['GET', '/api/settings', ({ db }) => maskSettings(settingsObj(db))],
   ['PUT', '/api/settings', ({ db, user, body }) => {
     requireAdmin(user);
     const up = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
     if ('fiscal_mode' in body && !FISCAL_MODES.includes(body.fiscal_mode)) throw new HttpError(400, 'Geçersiz kasa modu');
     if ('tax_system' in body && !TAX_SYSTEMS.includes(body.tax_system)) throw new HttpError(400, 'Geçersiz vergi sistemi');
     for (const k of ['company_name', 'currency', 'company_address', 'company_tax_no', 'company_kpp', 'retail_counterparty_id',
-      'default_vat', 'fiscal_mode', 'atol_url', 'tax_system', 'cashier_name', 'cashier_inn', 'shop_warehouse_id']) {
+      'default_vat', 'fiscal_mode', 'atol_url', 'tax_system', 'cashier_name', 'cashier_inn', 'shop_warehouse_id',
+      'cz_mode', 'cz_token', 'channel_sync_minutes']) {
+      if (k === 'cz_token' && String(body[k] ?? '').startsWith('••')) continue;
       if (k in body) up.run(k, String(body[k]));
     }
-    return settingsObj(db);
+    return maskSettings(settingsObj(db));
   }],
 
   ['GET', '/api/users', ({ db, user }) => {
@@ -210,6 +215,27 @@ export const routes = [
   ['POST', '/api/documents', ({ db, user, body }) => saveDocument(db, body, user.id)],
   ['PUT', '/api/documents/:id', ({ db, user, body, params }) => saveDocument(db, body, user.id, Number(params.id))],
   ['DELETE', '/api/documents/:id', ({ db, params }) => { deleteDocument(db, Number(params.id)); return { ok: true }; }],
+
+  ['POST', '/api/marking/check', async ({ db, body }) => checkCodes(settingsObj(db), Array.isArray(body.codes) ? body.codes : [])],
+  ['GET', '/api/marking/status', ({ db, query }) => {
+    const p = parseCode(query.code);
+    if (!p) throw new HttpError(400, `Geçersiz markalama kodu: ${String(query.code ?? '').slice(0, 40)}`);
+    const product = db.prepare("SELECT id, name, barcode, marking FROM products WHERE archived = 0 AND marking != ''").all()
+      .find((x) => String(x.barcode).replace(/\D/g, '').padStart(14, '0') === p.gtin) ?? null;
+    return { ...p, ...codeStatus(db, p.cis), product };
+  }],
+
+  ['GET', '/api/channels', ({ db }) => listChannels(db)],
+  ['POST', '/api/channels', ({ db, user, body }) => { requireAdmin(user); return saveChannel(db, body); }],
+  ['PUT', '/api/channels/:id', ({ db, user, body, params }) => { requireAdmin(user); return saveChannel(db, body, Number(params.id)); }],
+  ['DELETE', '/api/channels/:id', ({ db, user, params }) => {
+    requireAdmin(user);
+    db.prepare('DELETE FROM channels WHERE id = ?').run(Number(params.id));
+    return { ok: true };
+  }],
+  ['POST', '/api/channels/:id/sync', ({ db, params }) => syncChannel(db, Number(params.id))],
+  ['POST', '/api/channels/:id/map', ({ db, params }) => mapChannel(db, Number(params.id))],
+  ['GET', '/api/channels/:id/log', ({ db, params }) => channelLog(db, Number(params.id))],
 
   ['POST', '/api/documents/:id/fiscal/:kind', ({ db, params }) => startReceipt(db, Number(params.id), params.kind, settingsObj(db))],
   ['POST', '/api/fiscal/:id/result', ({ db, params, body }) => finishReceipt(db, Number(params.id), body)],

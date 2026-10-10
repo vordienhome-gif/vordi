@@ -156,6 +156,49 @@ function migrate(db) {
   const has = (table, col) => db.prepare(`PRAGMA table_info(${table})`).all().some((c) => c.name === col);
   if (!has('documents', 'external_id')) db.exec('ALTER TABLE documents ADD COLUMN external_id TEXT');
   db.exec('CREATE UNIQUE INDEX IF NOT EXISTS documents_external ON documents(type, external_id) WHERE external_id IS NOT NULL');
+  if (!has('products', 'marking')) db.exec("ALTER TABLE products ADD COLUMN marking TEXT NOT NULL DEFAULT ''");
+  db.exec(`
+    -- Честный знак: belgelerde okutulan markalama kodları (КМ). Kodun durumu, onu içeren
+    -- en son işlenmiş belgeden türetilir (bkz. server/marking.js).
+    CREATE TABLE IF NOT EXISTS line_codes (
+      id INTEGER PRIMARY KEY,
+      document_id INTEGER NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+      product_id INTEGER NOT NULL REFERENCES products(id),
+      cis TEXT NOT NULL,
+      raw TEXT NOT NULL,
+      gtin TEXT NOT NULL DEFAULT ''
+    );
+    CREATE INDEX IF NOT EXISTS line_codes_cis ON line_codes(cis);
+    CREATE INDEX IF NOT EXISTS line_codes_doc ON line_codes(document_id);
+
+    -- Satış kanalları: InSales, Ozon, Wildberries, Яндекс Маркет.
+    CREATE TABLE IF NOT EXISTS channels (
+      id INTEGER PRIMARY KEY,
+      type TEXT NOT NULL,
+      name TEXT NOT NULL,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      config TEXT NOT NULL DEFAULT '{}',
+      warehouse_id INTEGER REFERENCES warehouses(id),
+      counterparty_id INTEGER REFERENCES counterparties(id),
+      orders_since TEXT NOT NULL DEFAULT '',
+      last_sync_at TEXT NOT NULL DEFAULT '',
+      last_error TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS channel_offers (
+      channel_id INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+      product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+      external_id TEXT NOT NULL,
+      PRIMARY KEY (channel_id, product_id)
+    );
+    CREATE TABLE IF NOT EXISTS channel_log (
+      id INTEGER PRIMARY KEY,
+      channel_id INTEGER NOT NULL REFERENCES channels(id) ON DELETE CASCADE,
+      level TEXT NOT NULL DEFAULT 'info',
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
   const def = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   for (const [k, v] of Object.entries(DEFAULT_SETTINGS)) def.run(k, v);
 }
@@ -171,6 +214,9 @@ export const DEFAULT_SETTINGS = {
   cashier_name: '',
   cashier_inn: '',
   shop_warehouse_id: '',
+  cz_mode: 'off',
+  cz_token: '',
+  channel_sync_minutes: '10',
 };
 
 export function tx(db, fn) {

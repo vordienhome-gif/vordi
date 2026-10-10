@@ -1,5 +1,6 @@
 import { DOC_TYPES } from './doctypes.js';
 import { tx } from './db.js';
+import { validateLineCodes } from './marking.js';
 
 export class HttpError extends Error {
   constructor(status, message) {
@@ -69,10 +70,12 @@ export function getDocument(db, id) {
   if (!doc) throw new HttpError(404, 'Belge bulunamadı');
   doc.lines = db.prepare(
     `SELECT l.id, l.product_id, l.qty, l.actual_qty, l.price, l.vat, p.name AS product, p.code, p.article, p.unit,
-            p.is_service
+            p.is_service, p.marking, p.barcode
      FROM document_lines l JOIN products p ON p.id = l.product_id
      WHERE l.document_id = ? ORDER BY l.position, l.id`,
   ).all(id);
+  const codes = db.prepare('SELECT product_id, raw FROM line_codes WHERE document_id = ? ORDER BY id').all(id);
+  for (const l of doc.lines) l.codes = codes.filter((c) => c.product_id === l.product_id).map((c) => c.raw);
   doc.fiscal = db.prepare(
     'SELECT * FROM fiscal_receipts WHERE document_id = ? ORDER BY id',
   ).all(id);
@@ -108,6 +111,7 @@ export function saveDocument(db, data, userId, id = null) {
         price: num(l.price),
         vat: num(l.vat),
         position: i,
+        codes: Array.isArray(l.codes) ? l.codes.map(String).filter((c) => c.trim()) : [],
       }))
     : [];
   if (!t.inventory && lines.some((l) => l.qty <= 0)) throw new HttpError(400, 'Miktar sıfırdan büyük olmalıdır');
@@ -129,6 +133,9 @@ export function saveDocument(db, data, userId, id = null) {
     comment: String(data.comment || ''),
   };
 
+  // Честный знак kodları: işlenmiş belgede tam doğrulama, taslakta yalnızca biçim kontrolü.
+  const lineCodes = t.lines ? validateLineCodes(db, type, lines, id, { posted: !!fields.posted }) : [];
+
   return tx(db, () => {
     let docId = id;
     if (existing) {
@@ -140,6 +147,7 @@ export function saveDocument(db, data, userId, id = null) {
          WHERE id=$id`,
       ).run({ ...fields, id });
       db.prepare('DELETE FROM document_lines WHERE document_id = ?').run(id);
+      db.prepare('DELETE FROM line_codes WHERE document_id = ?').run(id);
     } else {
       docId = Number(db.prepare(
         `INSERT INTO documents (type, number, moment, counterparty_id, warehouse_id, target_warehouse_id, base_id,
@@ -160,6 +168,8 @@ export function saveDocument(db, data, userId, id = null) {
       ins.run(docId, l.product_id, l.qty, l.actual_qty, l.price, l.vat, l.position);
       sum += l.qty * l.price;
     }
+    const insCode = db.prepare('INSERT INTO line_codes (document_id, product_id, cis, raw, gtin) VALUES (?, ?, ?, ?, ?)');
+    for (const lc of lineCodes) for (const c of lc.codes) insCode.run(docId, lc.product_id, c.cis, c.raw, c.gtin);
     if (!t.lines) sum = num(data.sum);
     db.prepare('UPDATE documents SET sum = ? WHERE id = ?').run(round2(sum), docId);
     return getDocument(db, docId);
@@ -188,6 +198,7 @@ export function deriveDocument(db, id, targetType) {
   if (t.lines) {
     draft.lines = src.lines.map((l) => ({
       product_id: l.product_id, product: l.product, unit: l.unit, qty: l.qty, price: l.price, vat: l.vat,
+      marking: l.marking, barcode: l.barcode, codes: l.codes,
     }));
   } else {
     const paid = db.prepare(

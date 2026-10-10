@@ -1,5 +1,5 @@
 // Uygulama kabuğunu önbelleğe alır; API istekleri her zaman ağdan gelir.
-const CACHE = 'vordi-v2';
+const CACHE = 'vordi-v3';
 const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/i18n.js', '/lang/ru.js', '/icon.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', (e) => {

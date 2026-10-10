@@ -52,7 +52,7 @@ function findProduct(db, item) {
   return null;
 }
 
-function findOrCreateCustomer(db, c = {}) {
+export function findOrCreateCustomer(db, c = {}) {
   const name = String(c.name ?? '').trim();
   const email = String(c.email ?? '').trim().toLowerCase();
   const phone = String(c.phone ?? '').replace(/[^\d+]/g, '');

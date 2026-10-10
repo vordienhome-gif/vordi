@@ -20,6 +20,8 @@ Rusya'da kullanım için hazırlanmıştır: arayüz **Rusça ve Türkçe**, ₽
 | **Raporlar** | Stok bakiyeleri (stok, rezerv, beklenen, kullanılabilir, maliyet ve satış değeri), dönemsel stok hareketleri, cari hesaplar ve hesap ekstresi, kasa/banka akışı |
 | **Para** | Gelen/giden ödemeler, Kasa ve Banka hesapları, gider kategorileri |
 | **Perakende** | Barkod okuyuculu POS satış ekranı, nakit/kart ödeme, 54-ФЗ fişi (АТОЛ Web Server), vardiya açma/kapama, X/Z raporları |
+| **Честный знак** | Ürün kartında markalama türü; POS'ta ve belgelerde DataMatrix okutma; aynı kodun iki kez satılmasını engelleme; satış öncesi True API kontrolü (разрешительный режим); kodların kasa fişine eklenmesi |
+| **Satış kanalları** | InSales, Ozon, Wildberries, Яндекс Маркет: sipariş içe aktarma, iptallerin yansıması, stok gönderme, ürün eşleştirme, otomatik senkronizasyon — bkz. [docs/KANALLAR-VE-MARKALAMA.md](docs/KANALLAR-VE-MARKALAMA.md) |
 | **Entegrasyonlar** | İnternet mağazası için token korumalı REST API (ürün, stok, sipariş) — bkz. [docs/API.md](docs/API.md) |
 | **Rusya** | ₽, НДС 22/20/10/7/5/0 % ve "без НДС", ИНН/КПП, СНО (ОСН, УСН, ЕСХН, Патент), Moskova saati |
 | **Dil ve mobil** | Rusça / Türkçe dil seçici; telefona kurulabilen PWA, telefon ekranına uyumlu düzen |
@@ -66,6 +68,8 @@ server/
   auth.js       scrypt ile şifreleme, oturumlar
   fiscal.js     54-ФЗ kasa fişi görevleri (АТОЛ JSON, ФФД 1.2)
   publicapi.js  İnternet mağazası API'si (/api/v1) ve API anahtarları
+  marking.js    Честный знак: DataMatrix ayrıştırma, kod durumu, True API kontrolü
+  channels/     InSales, Ozon, Wildberries, Яндекс Маркет adaptörleri ve senkronizasyon motoru
   demo.js       Örnek veri
 public/
   app.js        Bağımlılıksız tek sayfalık arayüz

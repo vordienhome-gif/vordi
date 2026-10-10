@@ -11,6 +11,8 @@
 | Rusya ayarları | ✅ ₽, НДС 22/20/10/7/5/0 % ve "без НДС", ИНН/КПП, СНО (ОСН, УСН, ЕСХН, Патент) |
 | Online kasa (54-ФЗ) | ✅ АТОЛ Web Server ile satış/iade fişi, vardiya açma, X ve Z raporu; cihazsız test modu |
 | İnternet mağazası | ✅ Token korumalı REST API: ürün, stok, sipariş (bkz. [API.md](API.md)) |
+| Честный знак | ✅ DataMatrix okutma, mükerrer satış engeli, разрешительный режим (True API), koda göre fiş — bkz. [KANALLAR-VE-MARKALAMA.md](KANALLAR-VE-MARKALAMA.md) |
+| Satış kanalları | ✅ InSales, Ozon, Wildberries, Яндекс Маркет: sipariş + stok senkronizasyonu (gerçek anahtarla deneme bekliyor) |
 | Mobil | ✅ PWA: telefonda "ana ekrana ekle" ile uygulama gibi açılır, telefon düzenine uyumlu |
 
 ## Gerçek kasada devreye alma (yapılması gerekenler)
@@ -29,7 +31,7 @@ Süreler 2–3 geliştiricilik bir ekip için yaklaşık tahminlerdir. Sıralama
 
 ### Aşama 1 — Mağaza ve internet satışını tamamlamak (≈ 1–2 ay)
 
-- **Честный знак (markalama):** kasada DataMatrix kodu okutma, kodu fişe ekleme (ФФД 1.2), satıştan önce kodun çevrim içi kontrolü (разрешительный режим). Markalı ürün (giyim, ayakkabı, su, süt ürünleri, parfüm vb.) satıyorsanız **zorunlu**.
+- **Честный знак — kalanlar:** ЭДО ile УПД'den kod kabulü, yerel modül (ЛМ ЧЗ), pazaryeri sevkiyatlarına kod bildirme.
 - **Telefon kamerasıyla barkod okutma** (PWA içinde) ve Android el terminalleri (ТСД) desteği.
 - **Varyantlar** (beden/renk), fiyat listeleri ve indirimler.
 - **1С-Битрикс / CommerceML** değişim formatı: Bitrix, InSales gibi platformlar ek modül yazmadan bağlanır.
@@ -39,7 +41,7 @@ Süreler 2–3 geliştiricilik bir ekip için yaklaşık tahminlerdir. Sıralama
 ### Aşama 2 — Mobil ve çoklu kanal (≈ 2–3 ay)
 
 - **Native mobil uygulama** (Android/iOS): çevrim dışı çalışan kasa, depo sayımı, sevkiyat toplama.
-- **Pazaryerleri:** Ozon, Wildberries, Яндекс Маркет; stok ve sipariş senkronizasyonu.
+- **Pazaryerleri — kalanlar:** FBS sevkiyat etiketleri, WB iptalleri, fiyat senkronizasyonu, ürün kartı oluşturma.
 - **ЭДО:** Диадок / СБИС / Контур üzerinden УПД gönderme ve alma (markalı ürün kabulünde zorunlu).
 - **Ödemeler:** СБП ile QR ödeme ve banka POS entegrasyonu.
 

@@ -357,7 +357,7 @@ async function viewDocList(type) {
 }
 
 // ---------- Ürün seçici ----------
-function productPicker(container, onPick, { placeholder = t('Ürün ekle: ad, kod veya barkod okutun…') } = {}) {
+function productPicker(container, onPick, { placeholder = t('Ürün ekle: ad, kod veya barkod okutun…'), onCode = null } = {}) {
   container.innerHTML = `<div class="picker"><input placeholder="${esc(placeholder)}"><div class="dropdown" hidden></div></div>`;
   const input = $('input', container);
   const dd = $('.dropdown', container);
@@ -384,6 +384,7 @@ function productPicker(container, onPick, { placeholder = t('Ürün ekle: ad, ko
     if (e.key === 'Enter') {
       e.preventDefault();
       const s = input.value.trim();
+      if (onCode && looksLikeMark(s)) { input.value = ''; matches = []; render(); onCode(s); return; }
       const exact = (await refs('products')).find((p) => s && (p.barcode === s || p.code === s || p.article === s));
       if (exact) pick(exact); else if (matches[active]) pick(matches[active]);
     }
@@ -392,6 +393,25 @@ function productPicker(container, onPick, { placeholder = t('Ürün ekle: ad, ko
   input.onblur = () => setTimeout(() => { dd.hidden = true; }, 150);
   input.onfocus = () => { if (matches.length) dd.hidden = false; };
   return input;
+}
+
+// ---------- Честный знак ----------
+const MARKING_LABEL = { '': 'Markalama yok', lp: 'Giyim ve tekstil', shoes: 'Ayakkabı', perfumery: 'Parfüm', tires: 'Lastik', water: 'Su', milk: 'Süt ürünleri', other: 'Diğer markalı ürün' };
+// DataMatrix içeriği mi? (01) + 14 haneli GTIN + (21) seri
+const looksLikeMark = (s) => /^(\]d2|\]C1)?\u001d?01\d{14}21./.test(s) && s.length >= 25;
+const scanCodeModal = (name) => modal(t('Markalama kodu'),
+  `<p>${esc(t('{0} için DataMatrix kodunu okutun', name))}</p><input name="code" autocomplete="off" style="width:100%">`,
+  { okText: t('Ekle'), onOk: (f) => f.code.value.trim() });
+// Kodu yerel kayıtlara ve (ayarlıysa) Честный знак'a karşı kontrol eder.
+async function verifyCode(raw, productId, { online = true } = {}) {
+  const st = await api(`/api/marking/status?code=${encodeURIComponent(raw)}`);
+  if (productId && st.product && st.product.id !== productId) throw new Error(t('Kod bu ürüne ait değil'));
+  if (st.status === 'out') throw new Error(t('Kod zaten satılmış veya çıkmış: {0}', st.cis));
+  if (online) {
+    const [r] = await api('/api/marking/check', { method: 'POST', body: { codes: [raw] } });
+    if (!r.ok) throw new Error(t('Satış yasak: {0}', t(r.reason)));
+  }
+  return st;
 }
 
 // ---------- Kasa (АТОЛ Web Server) ----------
@@ -531,7 +551,7 @@ async function viewDocForm({ id, type, from, copy }) {
       <td><a href="#/products/${l.product_id}">${esc(l.product)}</a></td>
       ${ty.inventory
         ? `<td class="num">${qty(l.expected)}</td><td><input class="num" data-k="actual_qty" value="${l.actual_qty ?? ''}"></td><td class="num" data-diff>${signed(l.qty, qty)}</td>`
-        : `<td><input class="num" data-k="qty" value="${l.qty}"></td>`}
+        : `<td><span style="display:flex;gap:4px"><input class="num" data-k="qty" value="${l.qty}" ${l.marking && l.codes?.length ? 'readonly' : ''}>${l.marking ? `<button data-codes title="${esc(t('Markalama kodları'))}">🏷 ${l.codes?.length ?? 0}</button>` : ''}</span></td>`}
       <td class="muted">${esc(l.unit)}</td>
       <td><input class="num" data-k="price" value="${l.price}"></td>
       <td>${vatSelect(l.vat)}</td>
@@ -554,7 +574,18 @@ async function viewDocForm({ id, type, from, copy }) {
     };
     $('#lines').addEventListener('input', onEdit);
     $('#lines').addEventListener('change', onEdit);
-    $('#lines').addEventListener('click', (e) => {
+    $('#lines').addEventListener('click', async (e) => {
+      if (e.target.closest('[data-codes]')) {
+        const l = doc.lines[Number(e.target.closest('tr').dataset.i)];
+        const v = await modal(t('Markalama kodları: {0}', l.product),
+          `<p class="muted">${esc(t('Her satıra bir DataMatrix kodu okutun.'))}</p><textarea name="codes" style="min-height:220px;font-family:monospace">${esc((l.codes ?? []).join('\n'))}</textarea>`,
+          { onOk: (f) => f.codes.value.split('\n').map((x) => x.trim()).filter(Boolean) });
+        if (!v) return;
+        l.codes = v;
+        if (v.length || type === 'retaildemand') l.qty = v.length;
+        renderLines();
+        return;
+      }
       if (!e.target.closest('[data-del]')) return;
       doc.lines.splice(Number(e.target.closest('tr').dataset.i), 1);
       renderLines();
@@ -563,7 +594,7 @@ async function viewDocForm({ id, type, from, copy }) {
       const ex = doc.lines.find((l) => l.product_id === p.id);
       if (ex && !ty.inventory) { ex.qty += 1; renderLines(); return; }
       if (ex) return;
-      const line = { product_id: p.id, product: p.name, unit: p.unit, qty: 1, price: p[ty.priceField] ?? 0, vat: p.vat };
+      const line = { product_id: p.id, product: p.name, unit: p.unit, qty: 1, price: p[ty.priceField] ?? 0, vat: p.vat, marking: p.marking, codes: [] };
       if (ty.inventory) {
         const whId = Number(field('warehouse_id').value);
         const stocks = await api(`/api/products/${p.id}/stock`);
@@ -573,7 +604,25 @@ async function viewDocForm({ id, type, from, copy }) {
       }
       doc.lines.push(line);
       renderLines();
-    });
+    }, { onCode: async (raw) => {
+      // DataMatrix okutuldu: ürünü GTIN'den bul, satıra kodu ekle.
+      try {
+        const st = await verifyCode(raw, null, { online: false });
+        if (!st.product) throw new Error(t('Bu koda ait markalı ürün bulunamadı (GTIN {0})', st.gtin));
+        if (['retaildemand', 'demand'].includes(type) && st.status === 'unknown') toast(t('Uyarı: kod bu sistemde stok girişi olarak kayıtlı değil'));
+        let l = doc.lines.find((x) => x.product_id === st.product.id);
+        if (!l) {
+          const p = (await refs('products')).find((x) => x.id === st.product.id);
+          l = { product_id: p.id, product: p.name, unit: p.unit, qty: 0, price: p[ty.priceField] ?? 0, vat: p.vat, marking: p.marking, codes: [] };
+          doc.lines.push(l);
+        }
+        l.codes = l.codes ?? [];
+        if (l.codes.includes(raw)) throw new Error(t('Kod belgede iki kez okutuldu: {0}', st.cis));
+        l.codes.push(raw);
+        l.qty = l.codes.length;
+        renderLines();
+      } catch (e) { fail(e); }
+    } });
     renderLines();
   }
 
@@ -661,6 +710,7 @@ const productFields = (groups) => [
   { key: 'sale_price', label: t('Satış fiyatı'), type: 'number', default: 0 },
   { key: 'vat', label: t('KDV %'), type: 'select', options: VAT_RATES.map(([r, l]) => [r, t(l)]), default: Number(META.settings.default_vat ?? 22) },
   { key: 'min_stock', label: t('Minimum stok'), type: 'number', default: 0 },
+  { key: 'marking', label: t('Markalama (Честный знак)'), type: 'select', options: META.markingTypes.map((m) => [m, t(MARKING_LABEL[m])]) },
   { key: 'is_service', label: t('Hizmet (stok takibi yok)'), type: 'checkbox' },
   { key: 'description', label: t('Açıklama'), type: 'textarea' },
 ];
@@ -1082,10 +1132,38 @@ async function viewPos() {
         <button class="big primary" id="card" style="flex:1;justify-content:center">${esc(t('Kart'))}</button></div>
     </div>
   </div>`;
-  const add = (p) => {
-    const ex = cart.find((l) => l.product_id === p.id);
-    if (ex) ex.qty += 1; else cart.push({ product_id: p.id, product: p.name, unit: p.unit, qty: 1, price: p.sale_price, vat: p.vat });
+  const lineOf = (p) => {
+    let l = cart.find((x) => x.product_id === p.id);
+    if (!l) { l = { product_id: p.id, product: p.name, unit: p.unit, qty: 0, price: p.sale_price, vat: p.vat, marking: p.marking, codes: [], cis: [] }; cart.push(l); }
+    return l;
+  };
+  // Markalı ürün: her adet için DataMatrix okutulur ve satıştan önce kontrol edilir.
+  const addCode = async (p, raw) => {
+    const st = await verifyCode(raw, p.id);
+    if (cart.some((l) => l.cis.includes(st.cis))) throw new Error(t('Kod belgede iki kez okutuldu: {0}', st.cis));
+    const l = lineOf(p);
+    l.codes.push(raw);
+    l.cis.push(st.cis);
+    l.qty = l.codes.length;
     renderCart();
+  };
+  const add = async (p) => {
+    if (p.marking) {
+      const raw = await scanCodeModal(p.name);
+      if (!raw) return;
+      try { await addCode(p, raw); } catch (e) { fail(e); }
+      return;
+    }
+    lineOf(p).qty += 1;
+    renderCart();
+  };
+  const onCode = async (raw) => {
+    try {
+      const st = await api(`/api/marking/status?code=${encodeURIComponent(raw)}`);
+      const p = st.product && active.find((x) => x.id === st.product.id);
+      if (!p) throw new Error(t('Bu koda ait markalı ürün bulunamadı (GTIN {0})', st.gtin));
+      await addCode(p, raw);
+    } catch (e) { fail(e); }
   };
   const lc = (v) => String(v).toLocaleLowerCase(locale());
   const renderTiles = () => {
@@ -1097,7 +1175,8 @@ async function viewPos() {
   const total = () => cart.reduce((s, l) => s + l.qty * l.price, 0);
   const renderCart = () => {
     $('#cart').innerHTML = cart.length ? `<table><tbody>${cart.map((l, i) => `<tr data-i="${i}"><td>${esc(l.product)}<div class="muted">${money(l.price)}</div></td>
-      <td><span class="qty-ctl"><button data-d="-1">−</button><input value="${l.qty}" data-q><button data-d="1">+</button></span></td>
+      <td>${l.marking ? `<span class="qty-ctl"><button data-d="-1">−</button><span class="badge">🏷 ${l.qty}</span></span>`
+        : `<span class="qty-ctl"><button data-d="-1">−</button><input value="${l.qty}" data-q><button data-d="1">+</button></span>`}</td>
       <td class="num">${money(l.qty * l.price)}</td><td><button data-x>✕</button></td></tr>`).join('')}</tbody></table>`
       : `<div class="empty">${esc(t('Sepet boş — ürün seçin veya barkod okutun'))}</div>`;
     $('#total').textContent = money(total());
@@ -1106,6 +1185,7 @@ async function viewPos() {
   $('#cart').onclick = (e) => {
     const tr = e.target.closest('tr'); if (!tr) return;
     const i = Number(tr.dataset.i);
+    if (e.target.dataset.d && cart[i].marking) { cart[i].codes.pop(); cart[i].cis.pop(); cart[i].qty = cart[i].codes.length; if (!cart[i].qty) cart.splice(i, 1); renderCart(); return; }
     if (e.target.dataset.d) { cart[i].qty = Math.max(cart[i].qty + Number(e.target.dataset.d), 0); if (!cart[i].qty) cart.splice(i, 1); renderCart(); }
     if (e.target.dataset.x !== undefined) { cart.splice(i, 1); renderCart(); }
   };
@@ -1141,7 +1221,7 @@ async function viewPos() {
   };
   $('#cash').onclick = () => pay('Kasa');
   $('#card').onclick = () => pay('Banka');
-  productPicker($('#picker'), add, { placeholder: t('Barkod okutun veya ürün arayın…') }).focus();
+  productPicker($('#picker'), add, { placeholder: t('Barkod / DataMatrix okutun veya ürün arayın…'), onCode }).focus();
   renderTiles(); renderCart();
 }
 
@@ -1217,6 +1297,13 @@ async function viewIntegrations() {
     { key: 'cashier_name', label: t('Kasiyer adı') },
     { key: 'cashier_inn', label: t('Kasiyer ИНН') },
   ];
+  const czFields = [
+    { key: 'cz_mode', label: t('Kontrol modu'), type: 'select', options: [['off', t('Kapalı')], ['test', t('Test modu (cihazsız)')], ['api', 'True API (ГИС МТ)']] },
+    { key: 'cz_token', label: t('Честный знак API anahtarı (X-API-KEY)'), type: 'password' },
+  ];
+  const syncFields = [
+    { key: 'channel_sync_minutes', label: t('Senkronizasyon aralığı (dakika, 0 = kapalı)'), type: 'number' },
+  ];
   const shopFields = [
     { key: 'shop_warehouse_id', label: t('İnternet siparişleri deposu'), type: 'select', options: [['', t('— ilk depo —')], ...ws.filter((w) => !w.archived).map((w) => [w.id, w.name])] },
   ];
@@ -1238,12 +1325,27 @@ GET  /api/v1/orders/{external_id}
 POST /api/v1/orders/{external_id}/cancel</pre>
     </div>
   </div>
+  <div class="grid cols-2" style="margin-top:12px">
+    <div class="card"><h2>Честный знак</h2>
+      <p class="muted">${esc(t('Satıştan önce her markalama kodu kontrol edilir (разрешительный режим). Kodlar kasa fişine eklenir.'))}</p>
+      <div id="czform">${formHtml(czFields, s)}</div>
+      <div style="margin-top:12px"><button id="czsave" class="primary" ${isAdmin ? '' : 'disabled'}>${esc(t('Kaydet'))}</button></div></div>
+    <div class="card"><h2>${esc(t('Otomatik senkronizasyon'))}</h2>
+      <p class="muted">${esc(t('Siparişler kanallardan alınır, kullanılabilir stok (stok − rezerv) kanallara gönderilir.'))}</p>
+      <div id="syncform">${formHtml(syncFields, s)}</div>
+      <div style="margin-top:12px"><button id="syncsave" class="primary" ${isAdmin ? '' : 'disabled'}>${esc(t('Kaydet'))}</button></div></div>
+  </div>
+  <div style="margin-top:12px"><div class="page-head"><h2 style="margin:0">${esc(t('Satış kanalları'))}</h2><div class="spacer"></div>
+    ${isAdmin ? `<button id="chadd" class="primary">+ ${esc(t('Kanal ekle'))}</button>` : ''}</div><div id="channels"></div></div>
   ${isAdmin ? `<div style="margin-top:12px"><div class="page-head"><h2 style="margin:0">${esc(t('API anahtarları'))}</h2><div class="spacer"></div><button id="tadd" class="primary">+ ${esc(t('Anahtar oluştur'))}</button></div><div id="tokens"></div></div>` : ''}`;
   const saveSettings = (root, fields) => async () => {
     try { META.settings = await api('/api/settings', { method: 'PUT', body: readForm(root, fields) }); toast(t('Ayarlar kaydedildi')); } catch (e) { fail(e); }
   };
   $('#fsave').onclick = saveSettings($('#fform'), fiscalFields);
   $('#shsave').onclick = saveSettings($('#shform'), shopFields);
+  $('#czsave').onclick = saveSettings($('#czform'), czFields);
+  $('#syncsave').onclick = saveSettings($('#syncform'), syncFields);
+  await renderChannels(ws, isAdmin);
   $('#ftest').onclick = async () => {
     const url = $('#fform [name=atol_url]').value.replace(/\/+$/, '');
     try {
@@ -1270,6 +1372,75 @@ POST /api/v1/orders/{external_id}/cancel</pre>
       router();
     } catch (e) { fail(e); }
   };
+}
+
+// ---------- Satış kanalları ----------
+async function renderChannels(warehouses, isAdmin) {
+  const list = await api('/api/channels');
+  const types = Object.fromEntries(META.channelTypes.map((c) => [c.type, c]));
+  $('#channels').innerHTML = list.length ? `<div class="grid cols-2">${list.map((c) => `<div class="card">
+    <div class="page-head" style="margin-bottom:6px"><h2 style="margin:0">${esc(c.name)}</h2><span class="badge">${esc(c.title)}</span>
+      ${c.enabled ? '' : `<span class="badge off">${esc(t('Pasif'))}</span>`}<div class="spacer"></div></div>
+    <div class="muted" style="font-size:13px">${esc(t('Depo'))}: ${esc(warehouses.find((w) => w.id === c.warehouse_id)?.name ?? t('— ilk depo —'))}
+      ${types[c.type]?.needsMapping ? ` · ${esc(t('Eşleşen ürün: {0}', c.mapped))}` : ''}<br>
+      ${esc(t('Son senkronizasyon:'))} ${esc(c.last_sync_at || '—')}</div>
+    ${c.last_error ? `<div class="neg" style="font-size:13px;margin-top:6px">${esc(c.last_error)}</div>` : ''}
+    <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+      <button data-ch-sync="${c.id}" class="primary">${esc(t('Şimdi senkronize et'))}</button>
+      ${types[c.type]?.needsMapping ? `<button data-ch-map="${c.id}">${esc(t('Ürünleri eşleştir'))}</button>` : ''}
+      <button data-ch-log="${c.id}">${esc(t('Kayıtlar'))}</button>
+      ${isAdmin ? `<button data-ch-edit="${c.id}">${esc(t('Düzenle'))}</button><button data-ch-del="${c.id}" class="danger">${esc(t('Sil'))}</button>` : ''}
+    </div></div>`).join('')}</div>`
+    : `<div class="card empty">${esc(t('Henüz kanal yok. InSales, Ozon, Wildberries veya Яндекс Маркет ekleyin.'))}</div>`;
+
+  const editChannel = async (c) => {
+    let type = c?.type;
+    if (!type) {
+      type = await modal(t('Kanal ekle'), formHtml([{ key: 'type', label: t('Kanal türü'), type: 'select', options: META.channelTypes.map((x) => [x.type, x.title]) }]),
+        { okText: t('Devam'), onOk: (f) => f.type.value });
+      if (!type) return;
+    }
+    const ct = types[type];
+    const fields = [
+      { key: 'name', label: t('Ad'), required: true, default: ct.title },
+      { key: 'warehouse_id', label: t('Depo'), type: 'select', options: [['', t('— ilk depo —')], ...warehouses.filter((w) => !w.archived).map((w) => [w.id, w.name])] },
+      { key: 'enabled', label: t('Etkin'), type: 'checkbox', default: 1 },
+      ...ct.fields.map((f) => ({ key: `cfg_${f.key}`, label: t(f.label), type: f.secret ? 'password' : 'text' })),
+    ];
+    const values = c ? { ...c, ...Object.fromEntries(Object.entries(c.config).map(([k, v]) => [`cfg_${k}`, v])) } : {};
+    const v = await formModal(c ? t('Kanalı düzenle') : ct.title, fields, values);
+    if (!v) return;
+    const body = { type, name: v.name, warehouse_id: v.warehouse_id, enabled: v.enabled, config: {} };
+    for (const f of ct.fields) body.config[f.key] = v[`cfg_${f.key}`];
+    try { await api(c ? `/api/channels/${c.id}` : '/api/channels', { method: c ? 'PUT' : 'POST', body }); toast(t('Kanal kaydedildi')); router(); } catch (e) { fail(e); }
+  };
+  if ($('#chadd')) $('#chadd').onclick = () => editChannel(null);
+  const busy = (b, fn) => async () => {
+    b.disabled = true;
+    try { await fn(); } catch (e) { fail(e); } finally { b.disabled = false; }
+  };
+  $$('[data-ch-sync]').forEach((b) => (b.onclick = busy(b, async () => {
+    const r = await api(`/api/channels/${b.dataset.chSync}/sync`, { method: 'POST' });
+    toast(t('{0} yeni sipariş, {1} iptal, {2} ürün stoğu gönderildi', r.created, r.cancelled, r.stock));
+    router();
+  })));
+  $$('[data-ch-map]').forEach((b) => (b.onclick = busy(b, async () => {
+    const r = await api(`/api/channels/${b.dataset.chMap}/map`, { method: 'POST' });
+    toast(t('{0} ürün eşleşti, {1} kanal ürünü eşleşmedi', r.mapped, r.unmatched));
+    router();
+  })));
+  $$('[data-ch-log]').forEach((b) => (b.onclick = async () => {
+    const rows = await api(`/api/channels/${b.dataset.chLog}/log`);
+    modal(t('Kayıtlar'), tableHtml([
+      { key: 'created_at', title: t('Zaman'), nowrap: true },
+      { key: 'message', title: '', fmt: (v, r) => `<span class="${r.level === 'error' ? 'neg' : ''}">${esc(t(v))}</span>` },
+    ], rows, { footer: false, empty: t('Kayıt yok') }), { okText: '' });
+  }));
+  $$('[data-ch-edit]').forEach((b) => (b.onclick = () => editChannel(list.find((c) => c.id === Number(b.dataset.chEdit)))));
+  $$('[data-ch-del]').forEach((b) => (b.onclick = async () => {
+    if (!(await confirmModal(t('Kanal silinsin mi? Daha önce aktarılan siparişler kalır.')))) return;
+    try { await api(`/api/channels/${b.dataset.chDel}`, { method: 'DELETE' }); router(); } catch (e) { fail(e); }
+  }));
 }
 
 // Mobil cihazlarda ana ekrana eklenebilir uygulama (PWA).
