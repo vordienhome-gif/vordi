@@ -83,7 +83,14 @@ def push(theme_id, names, push_all):
         else:
             if old:
                 api('DELETE', f"themes/{theme_id}/assets/{old['id']}.json")
-            api('POST', f'themes/{theme_id}/assets.json', {'asset': asset})
+            try:
+                api('POST', f'themes/{theme_id}/assets.json', {'asset': asset})
+            except RuntimeError as e:
+                # Bağlantı koparsa istek sunucuya ulaşmış olabilir; tekrar denemede «уже существует» gelir
+                if 'HTTP 422' not in str(e) or 'существует' not in str(e) or 'content' not in asset:
+                    raise
+                created = {a['inner_file_name']: a for a in api('GET', f'themes/{theme_id}/assets.json')}[name]
+                api('PUT', f"themes/{theme_id}/assets/{created['id']}.json", {'asset': {'content': asset['content']}})
         tstate[name] = h
         json.dump(state, open(STATE, 'w'), indent=1)
         print('yüklendi:', name)
