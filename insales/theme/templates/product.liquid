@@ -154,22 +154,14 @@
     <div class="rte">{{ product.description }}</div>
   </section>
   {%- endif -%}
-  {%- comment -%}Служебные свойства (учёт, категории маркетплейсов, флаги true/false) покупателю не показываем{%- endcomment -%}
-  {%- capture props_rows -%}
-      {%- for prop in product.properties -%}
-      {%- assign pv = '' -%}
-      {%- for c in prop.characteristics -%}{%- assign pv = pv | append: c.title -%}{%- unless forloop.last -%}{%- assign pv = pv | append: ', ' -%}{%- endunless -%}{%- endfor -%}
-      {%- assign pt = prop.title | downcase -%}
-      {%- assign skip = false -%}
-      {%- if pv == blank or pv == 'false' or pv == 'true' -%}{%- assign skip = true -%}{%- endif -%}
-      {%- if pt contains 'категория' or pt contains '(1с)' or pt contains 'комиссион' or pt contains 'прослежив' or pt == 'метка' -%}{%- assign skip = true -%}{%- endif -%}
-      {%- unless skip -%}<tr><th scope="row">{{ prop.title }}</th><td>{{ pv }}</td></tr>{%- endunless -%}
-      {%- endfor -%}
-  {%- endcapture -%}
-  {%- if props_rows != blank -%}
+  {%- if product.properties.size > 0 -%}
   <section class="block">
     <h2 class="block__title">Характеристики</h2>
-    <table class="props">{{ props_rows }}</table>
+    <table class="props">
+      {%- for prop in product.properties -%}
+      <tr><th scope="row">{{ prop.title }}</th><td>{%- for c in prop.characteristics -%}{{ c.title }}{% unless forloop.last %}, {% endunless %}{%- endfor -%}</td></tr>
+      {%- endfor -%}
+    </table>
   </section>
   {%- endif -%}
 

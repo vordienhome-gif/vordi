@@ -6,6 +6,7 @@
     <input class="search__input" type="search" name="q" value="{{ search.query | escape }}" placeholder="Искать товары" aria-label="Поиск">
     <button class="btn btn--primary" type="submit">Найти</button>
   </form>
+  {% include 'gate-banner' %}
   {%- if search.performed? -%}
     {%- paginate search.results by 50 -%}
       {%- if search.results.size > 0 -%}

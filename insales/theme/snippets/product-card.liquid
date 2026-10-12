@@ -1,6 +1,6 @@
 {%- comment -%}
   Карточка товара в стиле маркетплейса: фото 3:4, крупная цена, название, наличие, кнопка «В корзину».
-  Параметр: card_product. Один вариант — кнопка добавляет 1 шт. в корзину; несколько — ведёт на выбор размера/цвета.
+  Цены и кнопка покупки — только подтверждённым клиентам (vo_show). Параметр: card_product. Один вариант — кнопка добавляет 1 шт. в корзину; несколько — ведёт на выбор размера/цвета.
 {%- endcomment -%}
 {%- assign cp = card_product -%}
 {%- assign cp_v = cp.variants.first -%}
@@ -16,18 +16,21 @@
     {%- else -%}
       <span class="pcard__noimg">Фото скоро</span>
     {%- endif -%}
-    {%- if cp.available == false -%}<span class="pcard__badge">Нет в наличии</span>{%- elsif cp_old > cp_price and cp_price > 0 -%}{%- assign cp_pct = cp_old | minus: cp_price | times: 100 | divided_by: cp_old -%}<span class="pcard__badge pcard__badge--sale">−{{ cp_pct }}%</span>{%- endif -%}
+    {%- if cp.available == false -%}<span class="pcard__badge">Нет в наличии</span>{%- elsif vo_show and cp_old > cp_price and cp_price > 0 -%}{%- assign cp_pct = cp_old | minus: cp_price | times: 100 | divided_by: cp_old -%}<span class="pcard__badge pcard__badge--sale">−{{ cp_pct }}%</span>{%- endif -%}
   </a>
   <div class="pcard__body">
     <div class="pcard__price">
-      {%- if cp_from -%}<b>от {{ cp.price_min | money }}</b>
+      {%- if vo_show == false -%}<a class="pcard__ask" href="/page/stat-partnerom">Цена после подтверждения</a>
+      {%- elsif cp_from -%}<b>от {{ cp.price_min | money }}</b>
       {%- elsif cp_price > 0 -%}<b>{{ cp_v.price | money }}</b>{%- if cp_old > cp_price -%}<s>{{ cp_v.old_price | money }}</s>{%- endif -%}
       {%- else -%}<span class="pcard__ask">Цена по запросу</span>{%- endif -%}
     </div>
     <a class="pcard__title" href="{{ cp.url }}">{{ cp.title }}</a>
     {%- if cp.available -%}<span class="pcard__stock">В наличии</span>{%- endif -%}
     <div class="pcard__buy">
-      {%- if cp.available == false -%}
+      {%- if vo_show == false -%}
+        <a class="btn btn--soft btn--sm btn--block" href="{{ cp.url }}">Подробнее</a>
+      {%- elsif cp.available == false -%}
         <a class="btn btn--soft btn--sm btn--block" href="{{ cp.url }}">Подробнее</a>
       {%- elsif cp.variants.size > 1 -%}
         <a class="btn btn--primary btn--sm btn--block" href="{{ cp.url }}">Выбрать</a>

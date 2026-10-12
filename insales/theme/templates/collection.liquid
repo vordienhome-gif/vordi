@@ -9,7 +9,7 @@
     <div class="side">
       <div class="side__title">Разделы</div>
       <a class="side__link{% if collection.handle == 'all' %} is-active{% endif %}" href="/collection/all">Весь каталог</a>
-      {%- for c1 in collections.all.subcollections -%}
+      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}
         {%- assign c1_open = false -%}
         {%- for cc in current_collections -%}{%- if cc.id == c1.id -%}{%- assign c1_open = true -%}{%- endif -%}{%- endfor -%}
         <a class="side__link side__link--l1{% if c1.id == collection.id %} is-active{% endif %}" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>
@@ -39,8 +39,10 @@
           <select class="select" data-vo-sort aria-label="Сортировка">
             <option value="">По умолчанию</option>
             <option value="title" {% if order == 'title' %}selected{% endif %}>По названию А–Я</option>
+            {%- if vo_show -%}
             <option value="price" {% if order == 'price' %}selected{% endif %}>Сначала дешевле</option>
             <option value="descending_price" {% if order == 'descending_price' %}selected{% endif %}>Сначала дороже</option>
+            {%- endif -%}
             <option value="descending_age" {% if order == 'descending_age' %}selected{% endif %}>Сначала новые</option>
           </select>
         </label>
@@ -54,6 +56,7 @@
     </div>
     {%- endif -%}
 
+    {% include 'gate-banner' %}
     {%- if collection.products.size > 0 -%}
       {%- comment -%}Плитка: сначала товары с фото в наличии, затем без фото, затем отсутствующие.{%- endcomment -%}
       <div class="pview" data-vo-pview>

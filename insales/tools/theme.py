@@ -89,6 +89,20 @@ def push(theme_id, names, push_all):
         print('yüklendi:', name)
 
 
+def pull(theme_id, only=None):
+    """Şablon ve snippet içeriklerini API'den, CSS/JS'yi mağaza sayfasındaki CDN adresinden indirir."""
+    folders = {v: k for k, v in TYPES.items()}
+    for a in api('GET', f'themes/{theme_id}/assets.json'):
+        name, folder = a['inner_file_name'], folders.get(a['type'])
+        if not folder or (only and name not in only) or folder == 'media':
+            continue
+        content = api('GET', f"themes/{theme_id}/assets/{a['id']}.json").get('content') or ''
+        os.makedirs(os.path.join(THEME_DIR, folder), exist_ok=True)
+        with open(os.path.join(THEME_DIR, folder, name), 'w') as f:
+            f.write(content)
+        print('indirildi:', name)
+
+
 def main():
     a = sys.argv[1:]
     if not a or a[0] == 'list':
@@ -96,6 +110,8 @@ def main():
             print(t['id'], t['title'], 'YAYINDA' if t['is_published'] else '')
     elif a[0] == 'push':
         push(int(a[1]), set(x for x in a[2:] if x != '--all'), '--all' in a)
+    elif a[0] == 'pull':
+        pull(int(a[1]), set(a[2:]) or None)
     elif a[0] == 'publish':
         api('PUT', f'themes/{a[1]}.json', {'theme': {'is_published': True}})
         print('yayında:', a[1])
