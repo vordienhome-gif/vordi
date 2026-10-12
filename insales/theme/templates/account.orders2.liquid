@@ -23,7 +23,7 @@
           <td>{% if order.paid? %}<span class="stock stock--ok">Оплачен</span>{% else %}<span class="stock stock--order">Ожидает оплаты</span>{% endif %}</td>
           <td class="ta-r">{{ order.total_price | money }}</td>
           <td class="ta-r">
-            {%- if vo_state == 'approved' -%}<button type="button" class="btn btn--ghost btn--sm" data-vo-repeat="{{ order.url }}"{% if order_items != blank %} data-vo-repeat-items='{ {{ order_items }} }'{% endif %}>{% include 'icon', icon: 'repeat' %} Повторить</button>{%- endif -%}
+            {%- if vo_state == 'approved' -%}<button type="button" class="btn btn--ghost btn--sm" data-vo-repeat="{{ order.url }}"{% if order_items != blank %} data-vo-repeat-items='{ {{ order_items }} }'{% endif %}>{% include 'icon', icon_name: 'repeat' %} Повторить</button>{%- endif -%}
           </td>
         </tr>
       {%- endfor -%}

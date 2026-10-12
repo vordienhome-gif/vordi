@@ -8,7 +8,7 @@
     <h1 class="page-title">Корзина</h1>
     {%- if cart.items.size > 0 -%}
     <div class="toolbar">
-      <button type="button" class="btn btn--ghost btn--sm" data-vo-cart-csv>{% include 'icon', icon: 'download' %} Скачать CSV</button>
+      <button type="button" class="btn btn--ghost btn--sm" data-vo-cart-csv>{% include 'icon', icon_name: 'download' %} Скачать CSV</button>
       <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Печать</button>
     </div>
     {%- endif -%}
@@ -22,7 +22,7 @@
     <div class="empty">
       <p>Корзина пуста.</p>
       <a class="btn btn--primary" href="/collection/all">Перейти в каталог</a>
-      {%- if vo_state == 'approved' -%}<a class="btn btn--ghost" href="/client_account/orders">{% include 'icon', icon: 'repeat' %} Повторить прошлый заказ</a>{%- endif -%}
+      {%- if vo_state == 'approved' -%}<a class="btn btn--ghost" href="/client_account/orders">{% include 'icon', icon_name: 'repeat' %} Повторить прошлый заказ</a>{%- endif -%}
     </div>
   {%- else -%}
   <form action="{{ cart_url | default: '/cart_items' }}" method="post" data-cart-form class="cart__form">
@@ -51,7 +51,7 @@
               </div>
             </td>
             <td class="ptable__sum" data-cart-item-total-price>{% if vo_show %}{{ item.total_price | money }}{% else %}—{% endif %}</td>
-            <td><button type="button" class="iconbtn" data-item-delete="{{ item.id }}" aria-label="Удалить {{ item.title | escape }}">{% include 'icon', icon: 'close' %}</button></td>
+            <td><button type="button" class="iconbtn" data-item-delete="{{ item.id }}" aria-label="Удалить {{ item.title | escape }}">{% include 'icon', icon_name: 'close' %}</button></td>
           </tr>
         {%- endfor -%}
         </tbody>

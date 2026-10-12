@@ -1,10 +1,10 @@
-{%- comment -%}Полка товаров на главной. Параметры: shelf_collection, shelf_title, shelf_limit (по умолчанию 10).{%- endcomment -%}
+{%- comment -%}Полка товаров на главной. Параметры: shelf_collection, shelf_title, shelf_limit (по умолчанию 10), shelf_eyebrow.{%- endcomment -%}
 {%- assign sh_limit = shelf_limit | default: 10 -%}
 {%- if shelf_collection and shelf_collection.products.size > 0 -%}
 <section class="wrap section">
   <div class="section__head">
-    <h2 class="section__title">{{ shelf_title | default: shelf_collection.title }}</h2>
-    <a href="{{ shelf_collection.url }}">Смотреть все →</a>
+    <div>{%- if shelf_eyebrow != blank -%}<p class="eyebrow">{{ shelf_eyebrow }}</p>{%- endif -%}<h2 class="section__title">{{ shelf_title | default: shelf_collection.title }}</h2></div>
+    <a class="link-arrow" href="{{ shelf_collection.url }}">Смотреть все →</a>
   </div>
   <div class="pgrid pgrid--catalog">
     {%- for card_product in shelf_collection.products limit: sh_limit -%}{% include 'product-card' %}{%- endfor -%}

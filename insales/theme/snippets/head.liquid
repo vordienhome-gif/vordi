@@ -154,3 +154,4 @@ body { background: var(--bg); }
 </style>
 {%- capture meta_settings_value -%}{"feedback_captcha_enabled": {% if settings.feedback_captcha_enabled == '1' or settings.feedback_captcha_enabled == 'on' or settings.feedback_captcha_enabled == true %}true{% else %}false{% endif %} }{%- endcapture -%}
 <meta data-config="{{ meta_settings_value | escape }}" name="theme-settings" content="">
+{% include 'pro-styles' %}
