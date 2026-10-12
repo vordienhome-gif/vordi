@@ -12,7 +12,7 @@
 <article class="pcard{% unless cp.available %} is-unavailable{% endunless %}">
   <a class="pcard__img" href="{{ cp.url }}" tabindex="-1" aria-hidden="true">
     {%- if cp.images.size > 0 -%}
-      <img src="{{ cp.first_image | image_url: 480, format: 'webp' }}" srcset="{{ cp.first_image | image_url: 320, format: 'webp' }} 320w, {{ cp.first_image | image_url: 480, format: 'webp' }} 480w, {{ cp.first_image | image_url: 640, format: 'webp' }} 640w" sizes="(max-width: 700px) 48vw, (max-width: 1200px) 24vw, 230px" alt="" loading="lazy" decoding="async" width="300" height="400">
+      <img src="{{ cp.first_image | image_url: 480, format: 'webp' }}" srcset="{{ cp.first_image | image_url: 320, format: 'webp' }} 320w, {{ cp.first_image | image_url: 480, format: 'webp' }} 480w, {{ cp.first_image | image_url: 640, format: 'webp' }} 640w" sizes="(max-width: 700px) 48vw, (max-width: 1200px) 24vw, 230px" alt="{{ cp.title | escape }}" loading="lazy" decoding="async" width="300" height="400">
     {%- else -%}
       <span class="pcard__noimg">Фото скоро</span>
     {%- endif -%}

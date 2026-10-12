@@ -10,6 +10,7 @@
     <a class="topbar__link topbar__item--hide-md" href="/page/dostavka">Доставка</a>
     <a class="topbar__link topbar__item--hide-md" href="/page/oplata">Оплата</a>
     <a class="topbar__link topbar__item--hide-sm" href="/page/kontakty">Контакты</a>
+    {% include 'messengers', mx_style: 'list', mx_class: 'topbar__link topbar__item--hide-sm' %}
     {%- if tg != blank -%}<a class="topbar__link topbar__item--hide-sm" href="https://t.me/{{ tg }}" target="_blank" rel="noopener">{% include 'icon', icon_name: 'telegram' %}Telegram</a>{%- endif -%}
     {%- if settings.phone != blank -%}<a class="topbar__link topbar__phone" href="tel:{{ phone_link }}">{% include 'icon', icon_name: 'phone' %}{{ settings.phone }}</a>{%- endif -%}
   </div>

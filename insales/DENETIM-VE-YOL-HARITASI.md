@@ -106,3 +106,35 @@ Mağaza: https://myshop-dfp694.myinsales.ru · InSales + МойСклад · 100
 | bellestoreopt.ru | WB/Ozon satıcıları için FBS rezervi; 3. siparişten sonra отсрочка ve daha düşük minimum |
 | sima-land.ru | Filigransız fotoğraf arşivi; satıcı hizmetleri |
 | vseinstrumenti.ru/b2b | Kişisel menajer; ЭДО; şirket içi çoklu kullanıcı |
+
+## 12.10.2026 akşam — yapılanlar
+
+- SEO:
+  - 16 sayfaya Rusça başlık ve açıklama yazıldı (API).
+  - Ana sayfaya başlık, açıklama ve Organization + WebSite JSON-LD eklendi.
+  - Tüm sayfalara Open Graph etiketleri (başlık, açıklama, görsel, url) eklendi.
+  - Kategorilere otomatik başlık/açıklama eklendi ("… оптом из Турции").
+  - Canonical: sepet, arama ve 404 sayfaları noindex yapıldı, canonical çıkarıldı.
+  - Marka adının çift yazılması giderildi.
+  - Ürün kartı ve kategori görsellerine alt metni eklendi.
+- Mesajlaşma düğmeleri (`snippets/messengers.liquid`):
+  - WhatsApp: sağ altta yuvarlak düğme, üst bar, alt bilgi, iletişim sayfası ve ana sayfadaki fiyat listesi bloğu. Sohbet hazır mesajla açılıyor.
+  - MAX: aynı yerlerde. Profil bağlantısı tema ayarı `max_url` veya `MX_MAX_URL` sabitiyle girilene kadar gizli.
+
+## API ile yapılamayanlar (anahtarın yetkisi yok — panelden)
+
+API "ok" dönüyor ama hesap ve teslimat ayarları değişmiyor. Bunlar panelden yapılmalı:
+
+1. **Minimum 50 000 ₽:** Настройки → Оформление заказа → «Минимальная сумма заказа» = 50 000.
+   - Ek güvence: Настройки → Доставка → her teslimat yönteminde «Доступно при сумме заказа от» = 50 000.
+   - Not: "Дропшиппинг" sayfası dropshipping ortakları için minimum olmadığını söylüyor. Genel sınır onları da bağlar; sayfa metni veya kural güncellenmeli.
+2. **Hızlı sipariş:** Настройки → Оформление заказа → «Быстрый заказ / Заказ в 1 клик» kapatılmalı.
+3. **Fiyat türü ↔ müşteri grubu eşlemesi** (Товары → Типы цен):
+   - Опт Безнал → Оптовая цена
+   - Опт. Рынок → Опт рынок
+   - Опт. Рынок Круп. → Опт рынок крупный
+   - "Крупный опт" ve "Дропшиппинг" gruplarının hangi türü göreceği belirlenmeli.
+   - Tema ayarı `approved_groups` bu grupların tamamını içermeli.
+4. **JSON fiyat sızıntısı:** InSales desteğine yazılmalı. Metin aşağıda.
+
+> Здравствуйте! Магазин myshop-dfp694.myinsales.ru — оптовый (B2B). Цены (типы цен «Опт Безнал», «Опт. Рынок», «Опт. Рынок Круп.») должны быть видны только авторизованным клиентам из определённых групп. В шаблоне цены скрыты, но публичные JSON-адреса (/collection/all.json, /product/<handle>.json, /products_by_id/<id>.json, /search.json) отдают неавторизованным посетителям price, price2, price3, price4 и остатки по складам. Подскажите, пожалуйста, как отключить вывод цен и остатков в этих JSON для неавторизованных посетителей (или закрыть JSON-эндпоинты витрины), не ломая работу корзины и личного кабинета.

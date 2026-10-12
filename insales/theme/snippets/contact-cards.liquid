@@ -1,6 +1,7 @@
 {%- assign tg = settings.telegram | remove: '@' | strip -%}
 {%- assign wa = settings.whatsapp | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
 {%- assign phone_link = settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+    {% include 'messengers', mx_style: 'row' %}
     <div class="contacts">
       {%- if settings.phone != blank -%}<div class="contact"><span class="contact__label">Телефон</span><a href="tel:{{ phone_link }}">{{ settings.phone }}</a></div>{%- endif -%}
       {%- if settings.email != blank -%}<div class="contact"><span class="contact__label">E-mail</span><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>{%- endif -%}

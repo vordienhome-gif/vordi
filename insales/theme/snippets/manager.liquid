@@ -11,6 +11,7 @@
     </div>
     {%- if tg != blank -%}<a class="mgr__item" href="https://t.me/{{ tg }}" target="_blank" rel="noopener">{% include 'icon', icon_name: 'telegram' %} Написать в Telegram</a>{%- endif -%}
     {%- if wa != blank -%}<a class="mgr__item" href="https://wa.me/{{ wa }}" target="_blank" rel="noopener">{% include 'icon', icon_name: 'whatsapp' %} Написать в WhatsApp</a>{%- endif -%}
+    {% include 'messengers', mx_style: 'mgr' %}
     {%- if m_phone != blank -%}<a class="mgr__item" href="tel:{{ m_phone_link }}">{% include 'icon', icon_name: 'phone' %} {{ m_phone }}</a>{%- endif -%}
     {%- if settings.email != blank -%}<a class="mgr__item" href="mailto:{{ settings.email }}">{% include 'icon', icon_name: 'mail' %} {{ settings.email }}</a>{%- endif -%}
     <a class="mgr__item" href="/page/kontakty#form">{% include 'icon', icon_name: 'chat' %} Оставить сообщение</a>

@@ -202,4 +202,24 @@
   .hact--user { display: none; }
   .header .logo { overflow: hidden; }
 }
+
+/* Мессенджеры */
+.mxf { position: fixed; right: 18px; bottom: 82px; z-index: 59; display: flex; flex-direction: column; gap: 10px; }
+.mxf__btn { width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: #fff; box-shadow: 0 8px 22px rgba(20,33,58,.22); transition: transform .15s; }
+.mxf__btn:hover { transform: translateY(-2px); color: #fff; text-decoration: none; }
+.mxf__btn .ico { width: 26px; height: 26px; }
+.mxf__btn--wa { background: #1FA855; }
+.mxf__btn--max { background: #4A5BF5; }
+.mxf__max { font-weight: 800; font-size: 13px; letter-spacing: .04em; }
+.mxr { display: flex; flex-wrap: wrap; gap: 10px; margin: 0 0 16px; }
+.mxr__btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; color: #fff; font-weight: 600; }
+.mxr__btn:hover { color: #fff; text-decoration: none; filter: brightness(.95); }
+.mxr__btn--wa { background: #1FA855; }
+.mxr__btn--max { background: #4A5BF5; }
+.mxr__btn--tg { background: #229ED9; }
+.mxr__max { width: 20px; height: 20px; border-radius: 6px; background: rgba(255,255,255,.22); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+.cta2__or { margin: 22px 0 10px; color: #DCE6F3; font-size: 14px; }
+.cta2 .mxr { margin: 0; }
+@media (max-width: 640px) { .mxf { right: 12px; bottom: 78px; } .mxf__btn { width: 48px; height: 48px; } }
+@media print { .mxf { display: none !important; } }
 </style>

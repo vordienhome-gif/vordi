@@ -73,7 +73,7 @@
       {%- if c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign c1_img = c1.image | image_url: 480, format: 'webp' -%}{%- endunless -%}{%- endif -%}
       {%- if c1_img == nil -%}{%- for p in c1.products limit: 4 -%}{%- if c1_img == nil and p.images.size > 0 -%}{%- assign c1_img = p.first_image | image_url: 480, format: 'webp' -%}{%- endif -%}{%- endfor -%}{%- endif -%}
       <a class="cat2{% if forloop.first %} cat2--wide{% endif %}" href="{{ c1.url }}">
-        {%- if c1_img -%}<img class="cat2__img" src="{{ c1_img }}" alt="" loading="lazy" decoding="async" width="300" height="300">{%- else -%}<span class="cat2__img"></span>{%- endif -%}
+        {%- if c1_img -%}<img class="cat2__img" src="{{ c1_img }}" alt="{{ c1.title | escape }}" loading="lazy" decoding="async" width="300" height="300">{%- else -%}<span class="cat2__img"></span>{%- endif -%}
         <span class="cat2__body">
           <span class="cat2__title">{{ c1.title | downcase | capitalize }}</span>
           {%- if c1.products_count > 0 -%}<span class="cat2__count">{{ c1.products_count }} товаров</span>{%- endif -%}
@@ -145,6 +145,8 @@
         <li>{% include 'icon', icon_name: 'check' %}Фото товаров для ваших карточек</li>
         <li>{% include 'icon', icon_name: 'check' %}Персональный менеджер</li>
       </ul>
+      <p class="cta2__or">Или напишите нам напрямую:</p>
+      {% include 'messengers', mx_style: 'row' %}
     </div>
     <div class="cta2__form">
       {% include 'lead-form', form_kind: 'pricelist' %}

@@ -38,6 +38,7 @@
       {%- if settings.phone != blank -%}<a class="footer__link" href="tel:{{ phone_link }}">{{ settings.phone }}</a>{%- endif -%}
       {%- if settings.email != blank -%}<a class="footer__link" href="mailto:{{ settings.email }}">{{ settings.email }}</a>{%- endif -%}
       {%- if tg != blank -%}<a class="footer__link" href="https://t.me/{{ tg }}" target="_blank" rel="noopener">Telegram: @{{ tg }}</a>{%- endif -%}
+      {% include 'messengers', mx_style: 'list' %}
       {%- if settings.warehouse_address != blank -%}<span class="footer__text">{{ settings.warehouse_address }}</span>{%- endif -%}
       {%- if settings.work_hours != blank -%}<span class="footer__text">{{ settings.work_hours }}</span>{%- endif -%}
     </div>

@@ -11,6 +11,7 @@
     {{ content_for_layout }}
   </main>
   {% include 'footer' %}
+  {% include 'messengers', mx_style: 'float' %}
   {% include 'manager' %}
   {% include 'cookie' %}
   {% include_insales_scripts "common-js@v2" %}
