@@ -1,0 +1,14 @@
+{%- comment -%}Поле количества для массового добавления. Параметры: qty_variant, qty_title{%- endcomment -%}
+{%- assign qty_price = qty_variant.price | plus: 0 -%}
+{%- if vo_show and qty_variant.available and qty_price > 0 -%}
+<div class="qty" data-vo-qty>
+  <button type="button" class="qty__btn" data-vo-step="-1" aria-label="Меньше">−</button>
+  <input class="qty__input" type="number" inputmode="numeric" min="0" step="1" value="0"
+         data-vo-variant="{{ qty_variant.id }}" data-vo-price="{{ qty_variant.price }}"
+         {% if qty_variant.quantity > 0 %}data-vo-stock="{{ qty_variant.quantity }}"{% endif %}
+         aria-label="Количество{% if qty_title %}: {{ qty_title | escape }}{% endif %}">
+  <button type="button" class="qty__btn" data-vo-step="1" aria-label="Больше">+</button>
+</div>
+{%- elsif vo_show -%}
+<span class="muted">—</span>
+{%- endif -%}

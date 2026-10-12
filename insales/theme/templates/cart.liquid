@@ -1,0 +1,88 @@
+{%- include 'vo-access' -%}
+{%- assign c_total = cart.items_price | plus: 0 -%}
+{%- assign c_left = vo_min | minus: c_total -%}
+{%- if c_left < 0 -%}{%- assign c_left = 0 -%}{%- endif -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap cart" data-vo-cart-page>
+  <div class="cart__head">
+    <h1 class="page-title">Корзина</h1>
+    {%- if cart.items.size > 0 -%}
+    <div class="toolbar">
+      <button type="button" class="btn btn--ghost btn--sm" data-vo-cart-csv>{% include 'icon', icon: 'download' %} Скачать CSV</button>
+      <button type="button" class="btn btn--ghost btn--sm" onclick="window.print()">Печать</button>
+    </div>
+    {%- endif -%}
+  </div>
+
+  {%- if vo_show == false -%}
+    {% include 'gate-banner' %}
+  {%- endif -%}
+
+  {%- if cart.items.size == 0 -%}
+    <div class="empty">
+      <p>Корзина пуста.</p>
+      <a class="btn btn--primary" href="/collection/all">Перейти в каталог</a>
+      {%- if vo_state == 'approved' -%}<a class="btn btn--ghost" href="/client_account/orders">{% include 'icon', icon: 'repeat' %} Повторить прошлый заказ</a>{%- endif -%}
+    </div>
+  {%- else -%}
+  <form action="{{ cart_url | default: '/cart_items' }}" method="post" data-cart-form class="cart__form">
+    <input type="hidden" name="_method" value="put">
+    <div class="ptable-wrap">
+      <table class="ptable cart__table">
+        <thead>
+          <tr><th scope="col">Товар</th><th scope="col">Артикул</th><th scope="col" class="ta-r">Цена</th><th scope="col" class="ta-c">Количество</th><th scope="col" class="ta-r">Сумма</th><th scope="col"><span class="sr-only">Удалить</span></th></tr>
+        </thead>
+        <tbody>
+        {%- for item in cart.items -%}
+          <tr data-product-id="{{ item.product.id }}" data-item-id="{{ item.id }}" data-vo-cart-line data-sku="{{ item.sku | escape }}" data-title="{{ item.title | escape }}"{% if vo_show %} data-price="{{ item.sale_price }}"{% endif %}>
+            <td class="ptable__prod">
+              <a class="pcell" href="{{ item.product.url }}">
+                {%- if item.product.first_image -%}<img class="pcell__img" src="{{ item.product.first_image.compact_url }}" alt="" width="56" height="56" loading="lazy">{%- else -%}<span class="pcell__img pcell__img--empty"></span>{%- endif -%}
+                <span class="pcell__txt"><span class="pcell__title">{{ item.title }}</span></span>
+              </a>
+            </td>
+            <td class="ptable__sku">{{ item.sku | default: '—' }}</td>
+            <td class="ptable__price" data-cart-item-price>{% if vo_show %}{{ item.sale_price | money }}{% else %}{% include 'price-note' %}{% endif %}</td>
+            <td class="ptable__qty">
+              <div class="qty" data-quantity>
+                <button type="button" class="qty__btn" data-quantity-change="-1" aria-label="Меньше">−</button>
+                <input class="qty__input" type="number" inputmode="numeric" min="1" name="cart[quantity][{{ item.id }}]" value="{{ item.quantity | round }}" aria-label="Количество">
+                <button type="button" class="qty__btn" data-quantity-change="1" aria-label="Больше">+</button>
+              </div>
+            </td>
+            <td class="ptable__sum" data-cart-item-total-price>{% if vo_show %}{{ item.total_price | money }}{% else %}—{% endif %}</td>
+            <td><button type="button" class="iconbtn" data-item-delete="{{ item.id }}" aria-label="Удалить {{ item.title | escape }}">{% include 'icon', icon: 'close' %}</button></td>
+          </tr>
+        {%- endfor -%}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cart__bottom">
+      <div class="cart__notes">
+        <div class="notice notice--soft">
+          <b>Как проходит заказ:</b> вы оформляете заказ → менеджер звонит и подтверждает наличие, сроки и доставку → выставляем счёт → после оплаты отгружаем. Доставка по Москве и МО — бесплатно; СДЭК и транспортные компании оплачивает покупатель.
+        </div>
+        <button type="button" class="btn btn--ghost btn--sm" data-cart-clear>Очистить корзину</button>
+      </div>
+      <div class="cart__summary">
+        <div class="summary__row"><span>Позиций</span><b data-cart-positions-count>{{ cart.items.size }}</b></div>
+        {%- if vo_show -%}<div class="summary__row summary__row--total"><span>Итого</span><b data-cart-total-price data-vo-cart-total>{{ cart.items_price | money }}</b></div>{%- endif -%}
+        {%- if vo_min > 0 and vo_show -%}
+        <div class="summary__min" data-vo-minbar>
+          <span data-vo-mintext>{% if c_left > 0 %}До минимального заказа осталось <b>{{ c_left | money }}</b>{% else %}Минимальная сумма заказа достигнута{% endif %}</span>
+          {%- assign pct = c_total | times: 100 | divided_by: vo_min -%}{%- if pct > 100 -%}{%- assign pct = 100 -%}{%- endif -%}
+          <div class="bar"><div class="bar__fill{% if c_left == 0 %} is-ok{% endif %}" data-vo-minfill style="width:{{ pct }}%"></div></div>
+        </div>
+        {%- endif -%}
+        {%- if vo_show -%}
+          <button type="submit" name="make_order" value="1" class="btn btn--primary btn--lg btn--block{% if c_left > 0 %} is-disabled{% endif %}" data-cart-submit data-vo-checkout {% if c_left > 0 %}aria-disabled="true"{% endif %}>Оформить заказ</button>
+          <p class="muted small">Оплата по счёту после подтверждения менеджером. Итоговая цена фиксируется в счёте.</p>
+        {%- else -%}
+          <a class="btn btn--primary btn--lg btn--block" href="/page/stat-partnerom">Стать оптовым клиентом</a>
+        {%- endif -%}
+      </div>
+    </div>
+  </form>
+  {%- endif -%}
+</div>

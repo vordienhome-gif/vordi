@@ -1,0 +1,52 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="format-detection" content="telephone=no">
+{%- assign seo_title = title -%}
+{%- assign seo_desc = description -%}
+{%- comment -%}Стандартный SEO-шаблон InSales подставляет цену («купить за … ₽»). Для товаров цену не показываем.{%- endcomment -%}
+{%- if template contains 'product' -%}
+  {%- assign seo_title = product.html_title | default: product.title -%}
+  {%- assign seo_desc = product.meta_description | default: product.short_description | default: product.description | strip_html | strip_newlines | truncate: 200 -%}
+{%- endif -%}
+{%- if template contains 'cart' -%}{%- assign seo_title = 'Корзина' -%}{%- elsif template contains 'search' -%}{%- assign seo_title = 'Поиск по каталогу' -%}{%- endif -%}
+{%- if seo_title == blank -%}{%- assign seo_title = account.title -%}{%- endif -%}
+<title>{{ seo_title }}{% unless template == 'index' %} — {{ settings.brand_name | default: account.title }}{% endunless %}</title>
+<meta name="description" content="{% if filter %}{{ filter.meta_description | escape }}{% else %}{{ seo_desc | escape }}{% endif %}">
+{%- if keywords != blank -%}<meta name="keywords" content="{{ keywords | escape }}">{%- endif -%}
+{%- if template contains 'cart' or template contains 'search' -%}
+<meta name="robots" content="noindex,follow">
+{%- else -%}
+<meta name="robots" content="index,follow">
+{%- endif -%}
+{%- if template contains 'product' -%}
+<link rel="canonical" href="{{ account.url }}{{ product.canonical_url }}">
+<meta property="og:title" content="{{ product.title | escape }}">
+<meta property="og:type" content="product">
+<meta property="og:url" content="{{ account.url }}{{ product.url }}">
+{%- if product.first_image -%}<meta property="og:image" content="{{ product.first_image.original_url }}">{%- endif -%}
+{%- elsif template contains 'collection' -%}
+<link rel="canonical" href="{{ account.url }}{{ collection.url }}">
+<meta property="og:title" content="{{ collection.title | escape }}">
+{%- elsif template contains 'article' -%}
+<link rel="canonical" href="{{ account.url }}{{ article.url }}">
+<meta property="og:title" content="{{ article.title | escape }}">
+<meta property="og:type" content="article">
+{%- if article.image -%}<meta property="og:image" content="{{ article.image.original_url }}">{%- endif -%}
+{%- elsif template contains 'blog' -%}
+<link rel="alternate" type="application/rss+xml" title="{{ blog.title | escape }}" href="{{ account.url }}{{ blog.url }}.atom">
+{%- elsif template contains 'page' -%}
+<link rel="canonical" href="{{ account.url }}{{ page.url }}">
+{%- endif -%}
+<meta property="og:site_name" content="{{ settings.brand_name | default: account.title | escape }}">
+<meta property="og:locale" content="ru_RU">
+<link rel="preconnect" href="https://cdn.insales-shop.ru" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.insales-shop.ru">
+<link rel="preload" href="{{ 'golos-text-cyrillic-400-normal.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ 'golos-text-cyrillic-600-normal.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="{{ 'favicon.png' | asset_url }}" type="image/png">
+<link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
+<link rel="stylesheet" href="{{ 'extra.css' | asset_url }}">
+<link rel="stylesheet" href="{{ 'pro.css' | asset_url }}">
+{%- capture meta_settings_value -%}{"feedback_captcha_enabled": {% if settings.feedback_captcha_enabled == '1' or settings.feedback_captcha_enabled == 'on' or settings.feedback_captcha_enabled == true %}true{% else %}false{% endif %} }{%- endcapture -%}
+<meta data-config="{{ meta_settings_value | escape }}" name="theme-settings" content="">

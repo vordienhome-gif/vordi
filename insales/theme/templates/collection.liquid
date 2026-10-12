@@ -1,0 +1,80 @@
+{%- include 'vo-access' -%}
+{%- assign per_page = settings.collection_count | default: '50' | plus: 0 -%}
+{%- if per_page < 12 -%}{%- assign per_page = 48 -%}{%- endif -%}
+<div class="wrap">
+  {% include 'breadcrumbs' %}
+</div>
+<div class="wrap catalog">
+  <aside class="catalog__side" aria-label="Разделы каталога">
+    <div class="side">
+      <div class="side__title">Разделы</div>
+      <a class="side__link{% if collection.handle == 'all' %} is-active{% endif %}" href="/collection/all">Весь каталог</a>
+      {%- for c1 in collections.all.subcollections -%}
+        {%- assign c1_open = false -%}
+        {%- for cc in current_collections -%}{%- if cc.id == c1.id -%}{%- assign c1_open = true -%}{%- endif -%}{%- endfor -%}
+        <a class="side__link side__link--l1{% if c1.id == collection.id %} is-active{% endif %}" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>
+        {%- if c1_open -%}
+          {%- for c2 in c1.subcollections -%}
+            <a class="side__link side__link--l2{% if c2.id == collection.id %} is-active{% endif %}" href="{{ c2.url }}">{{ c2.title }}</a>
+            {%- assign c2_open = false -%}
+            {%- for cc in current_collections -%}{%- if cc.id == c2.id -%}{%- assign c2_open = true -%}{%- endif -%}{%- endfor -%}
+            {%- if c2_open -%}
+              {%- for c3 in c2.subcollections -%}<a class="side__link side__link--l3{% if c3.id == collection.id %} is-active{% endif %}" href="{{ c3.url }}">{{ c3.title }}</a>{%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
+        {%- endif -%}
+      {%- endfor -%}
+    </div>
+  </aside>
+
+  <section class="catalog__main">
+    {%- paginate products by per_page -%}
+    <div class="catalog__head">
+      <div>
+        <h1 class="page-title">{% if filter %}{{ filter.title }}{% else %}{{ collection.title }}{% endif %} <span class="page-title__count">{{ collection.products_count }}</span></h1>
+      </div>
+      <div class="toolbar">
+        <label class="toolbar__item">
+          <span class="sr-only">Сортировка</span>
+          <select class="select" data-vo-sort aria-label="Сортировка">
+            <option value="">По умолчанию</option>
+            <option value="title" {% if order == 'title' %}selected{% endif %}>По названию А–Я</option>
+            <option value="price" {% if order == 'price' %}selected{% endif %}>Сначала дешевле</option>
+            <option value="descending_price" {% if order == 'descending_price' %}selected{% endif %}>Сначала дороже</option>
+            <option value="descending_age" {% if order == 'descending_age' %}selected{% endif %}>Сначала новые</option>
+          </select>
+        </label>
+        <label class="toolbar__item toolbar__check"><input type="checkbox" data-vo-hide-na> Только в наличии</label>
+      </div>
+    </div>
+
+    {%- if collection.subcollections.size > 0 -%}
+    <div class="chips">
+      {%- for sc in collection.subcollections -%}{%- if sc.products_count > 0 -%}<a class="chip" href="{{ sc.url }}">{{ sc.title }} <span>{{ sc.products_count }}</span></a>{%- endif -%}{%- endfor -%}
+    </div>
+    {%- endif -%}
+
+    {%- if collection.products.size > 0 -%}
+      {%- comment -%}Плитка: сначала товары с фото в наличии, затем без фото, затем отсутствующие.{%- endcomment -%}
+      <div class="pview" data-vo-pview>
+        <div class="pgrid pgrid--catalog">
+          {%- for card_product in collection.products -%}{%- if card_product.available and card_product.images.size > 0 -%}{% include 'product-card' %}{%- endif -%}{%- endfor -%}
+          {%- for card_product in collection.products -%}{%- if card_product.available and card_product.images.size == 0 -%}{% include 'product-card' %}{%- endif -%}{%- endfor -%}
+          {%- for card_product in collection.products -%}{%- unless card_product.available -%}{% include 'product-card' %}{%- endunless -%}{%- endfor -%}
+        </div>
+      </div>
+    {%- else -%}
+      <div class="empty">В этом разделе пока нет товаров. <a href="/collection/all">Перейти в каталог</a></div>
+    {%- endif -%}
+
+    {% include 'pagination' %}
+    {%- if collection.description != blank -%}
+      {%- assign first_page = false -%}
+      {%- if paginate.current_page == blank -%}{%- assign first_page = true -%}{%- endif -%}
+      {%- if paginate.current_page == 1 -%}{%- assign first_page = true -%}{%- endif -%}
+      {%- if first_page -%}<div class="rte catalog__desc">{{ collection.description }}</div>{%- endif -%}
+    {%- endif -%}
+    {%- endpaginate -%}
+
+  </section>
+</div>

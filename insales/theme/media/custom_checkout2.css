@@ -1,0 +1,24 @@
+/* Elitmosteks — оформление системных страниц InSales (оформление заказа, личный кабинет) */
+
+.insales-checkout2 body, body.tpl-checkout, body.tpl-account { background: #F6F2EA; font-family: 'Golos Text', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #1C2230; }
+.tpl-checkout .co-section--checkout_content, .tpl-account .co-section--content { max-width: 1240px; }
+.tpl-checkout .co-checkout-block, .tpl-account .co-checkout-block,
+.tpl-checkout .co-sidebar, .tpl-account .co-tabs { background: #FFFFFF; border: 1px solid #E4DDD0; border-radius: 10px; }
+.co-title, .co-checkout-title { font-family: inherit; font-weight: 700; color: #1C2230; }
+.co-button, .co-button--primary, button.co-button, input.co-button {
+  background: #1E4E8C !important; border-color: #1E4E8C !important; color: #FFFFFF !important;
+  border-radius: 8px !important; min-height: 44px; font-weight: 600; font-family: inherit;
+}
+.co-button:hover { background: #173E70 !important; border-color: #173E70 !important; }
+.co-button--secondary, .co-button.co-button--secondary { background: #FFFFFF !important; color: #1E4E8C !important; }
+.co-input-field, .co-input, .co-select, .co-textarea, .co-checkout input[type="text"], .co-checkout input[type="email"], .co-checkout input[type="tel"], .co-checkout textarea {
+  border-color: #D9D1C2 !important; border-radius: 8px !important; font-family: inherit;
+}
+.co-input-field:focus, .co-input:focus, .co-textarea:focus { border-color: #1E4E8C !important; box-shadow: 0 0 0 3px rgba(30, 78, 140, .15) !important; }
+.co-link, .co-checkout a { color: #1E4E8C; }
+.co-price, .co-basket_total-price { font-variant-numeric: tabular-nums; }
+.co-table { background: #FFFFFF; border-radius: 10px; }
+.co-table-row--head { background: #F1ECE2; }
+.co-notice--success { background: #E6F0E3; }
+.co-notice--warning { background: #FBF1DC; }
+.co-delivery_method-price, .co-payment_method-price { font-weight: 600; }

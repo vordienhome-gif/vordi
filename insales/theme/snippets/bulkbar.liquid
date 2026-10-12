@@ -1,0 +1,18 @@
+{%- comment -%}Нижняя панель: выбранные товары, минимальный заказ, добавление в корзину{%- endcomment -%}
+{%- if vo_show -%}
+{%- assign bb_cart = cart.items_price | plus: 0 -%}
+<div class="bulkbar" data-vo-bulkbar>
+  <div class="wrap bulkbar__in">
+    <div class="bulkbar__min" data-vo-minbar {% if vo_min <= 0 %}hidden{% endif %}>
+      <span class="bulkbar__mintext" data-vo-mintext>Минимальный заказ — {{ vo_min | money }}</span>
+      <div class="bar"><div class="bar__fill" data-vo-minfill style="width:0%"></div></div>
+    </div>
+    <div class="bulkbar__sel">
+      <span>Выбрано: <b data-vo-sel-count>0</b> поз. на <b data-vo-sel-sum>0 ₽</b></span>
+      <span class="muted">В корзине: <span data-vo-cart-total>{{ cart.items_price | money }}</span></span>
+    </div>
+    <button type="button" class="btn btn--primary" data-vo-bulk-add disabled>{% include 'icon', icon: 'cart' %} Добавить в корзину</button>
+    <a class="btn btn--ghost" href="{{ cart_url | default: '/cart_items' }}">Корзина</a>
+  </div>
+</div>
+{%- endif -%}

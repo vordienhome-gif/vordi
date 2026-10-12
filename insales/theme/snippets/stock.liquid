@@ -1,0 +1,10 @@
+{%- comment -%}Остаток варианта. Параметр: stock_variant{%- endcomment -%}
+{%- assign st_q = stock_variant.quantity | plus: 0 -%}
+{%- assign st_many = settings.stock_many_from | default: '100' | plus: 0 -%}
+{%- if stock_variant.available == false or st_q <= 0 -%}
+  {%- if stock_variant.available -%}<span class="stock stock--order">Под заказ</span>{%- else -%}<span class="stock stock--none">Нет в наличии</span>{%- endif -%}
+{%- elsif settings.show_exact_stock == '1' or settings.show_exact_stock == 'on' or settings.show_exact_stock == true -%}
+  {%- if st_q >= st_many -%}<span class="stock stock--ok">&gt; {{ st_many }} шт</span>{%- else -%}<span class="stock stock--ok">{{ st_q }} шт</span>{%- endif -%}
+{%- else -%}
+  {%- if st_q >= st_many -%}<span class="stock stock--ok">Много</span>{%- elsif st_q >= 10 -%}<span class="stock stock--ok">В наличии</span>{%- else -%}<span class="stock stock--low">Мало</span>{%- endif -%}
+{%- endif -%}

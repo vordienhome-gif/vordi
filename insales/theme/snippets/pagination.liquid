@@ -1,0 +1,10 @@
+{%- if paginate.pages > 1 -%}
+<nav class="pager" aria-label="Страницы">
+  {%- if paginate.previous -%}<a class="pager__item" href="{{ paginate.previous.url }}" rel="prev">←</a>{%- endif -%}
+  {%- for part in paginate.parts -%}
+    {%- if part.is_link -%}<a class="pager__item" href="{{ part.url }}">{{ part.title }}</a>
+    {%- else -%}<span class="pager__item{% unless part.title == '…' or part.title == '...' %} is-current{% endunless %}">{{ part.title }}</span>{%- endif -%}
+  {%- endfor -%}
+  {%- if paginate.next -%}<a class="pager__item" href="{{ paginate.next.url }}" rel="next">→</a>{%- endif -%}
+</nav>
+{%- endif -%}
