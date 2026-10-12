@@ -138,3 +138,24 @@ API "ok" dönüyor ama hesap ve teslimat ayarları değişmiyor. Bunlar panelden
 4. **JSON fiyat sızıntısı:** InSales desteğine yazılmalı. Metin aşağıda.
 
 > Здравствуйте! Магазин myshop-dfp694.myinsales.ru — оптовый (B2B). Цены (типы цен «Опт Безнал», «Опт. Рынок», «Опт. Рынок Круп.») должны быть видны только авторизованным клиентам из определённых групп. В шаблоне цены скрыты, но публичные JSON-адреса (/collection/all.json, /product/<handle>.json, /products_by_id/<id>.json, /search.json) отдают неавторизованным посетителям price, price2, price3, price4 и остатки по складам. Подскажите, пожалуйста, как отключить вывод цен и остатков в этих JSON для неавторизованных посетителей (или закрыть JSON-эндпоинты витрины), не ломая работу корзины и личного кабинета.
+
+## Minimum sipariş kuralı (karar 12.10.2026)
+
+- "Дропшиппинг" müşteri grubu: minimum yok. Diğer tüm gruplar: 50 000 ₽.
+- Kural `snippets/vo-access.liquid` içinde, tema ayarlarından bağımsız. Sepet sayfası, minimum dolmadan "Оформить заказ" düğmesini kilitliyor; Enter ile gönderim de engelleniyor.
+- Onaylanmamış ziyaretçinin sepetinde ödeme düğmesi hiç oluşturulmuyor.
+- "Условия сотрудничества" ve "Стать оптовым клиентом" sayfalarına dropshipping istisnası yazıldı.
+
+### Sınırlar
+
+- Ödeme sayfası InSales'in kendi `/gocheckout` uygulaması; tema oraya müdahale edemiyor.
+- InSales'te minimum tutar genel ayar ya da teslimat yöntemi başına ayarlanıyor; müşteri grubuna göre ayarlanamıyor.
+- Sepeti atlayıp doğrudan `/gocheckout`'a giden biri, bugün minimumun altında da sipariş açabiliyor. Giriş yapmamış ziyaretçi bile API ile sepete ürün ekleyip ödeme sayfasına ulaşabiliyor.
+
+### Önerilen panel ayarları
+
+- Оформление заказа → yalnızca kayıtlı müşteriler sipariş verebilsin.
+- «Быстрый заказ» kapatılsın.
+- Grup bazlı sunucu zorunluluğu isteniyorsa iki seçenek var:
+  - "Привязка способов доставки к типам клиентов" ile dropshipping'e ayrı bir teslimat yöntemi, diğer yöntemlere 50 000 ₽ alt sınır. Bu ayrım müşteri grubuna değil müşteri tipine göre çalışır.
+  - Yöneticinin minimum altındaki dropshipping dışı siparişleri onaylamaması.

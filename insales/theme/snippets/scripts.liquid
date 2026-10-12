@@ -11,6 +11,15 @@
 <script>if(typeof window.$==='undefined'){window.$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));};}</script>
 <script src="{{ 'theme.js' | asset_url }}" defer></script>
 <script>
+  /* Минимальная сумма заказа: не даём отправить корзину на оформление, пока кнопка «Оформить» заблокирована (в т.ч. по Enter) */
+  document.addEventListener('submit',function(e){
+    var f=e.target; if(!f||!f.querySelector) return;
+    var co=f.querySelector('[data-vo-checkout]');
+    var wantsOrder=(e.submitter&&e.submitter.name==='make_order')||(!e.submitter&&co);
+    if(co&&wantsOrder&&co.getAttribute('aria-disabled')==='true'){ e.preventDefault(); e.stopPropagation(); co.click(); }
+  },true);
+</script>
+<script>
 (function(){
   function fmt(n){n=Math.round(Number(n)||0);return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ')+' ₽';}
   function toast(h,err){var t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t);}t.className='toast'+(err?' toast--error':'');t.innerHTML=h;t.hidden=false;clearTimeout(t._t);t._t=setTimeout(function(){t.hidden=true;},5000);}

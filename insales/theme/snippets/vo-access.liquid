@@ -26,5 +26,8 @@
     {%- endfor -%}
   {%- endif -%}
 {%- endif -%}
+{%- comment -%}Решение 12.10.2026: группа «Дропшиппинг» — без минимальной суммы заказа, остальные группы — от 50 000 ₽.{%- endcomment -%}
+{%- assign vo_g_dc = vo_group | downcase -%}
+{%- if vo_g_dc contains 'дропшиппинг' -%}{%- assign vo_min = 0 -%}{%- elsif vo_min < 50000 -%}{%- assign vo_min = 50000 -%}{%- endif -%}
 {%- assign vo_show = false -%}
 {%- if vo_state == 'approved' -%}{%- assign vo_show = true -%}{%- endif -%}
