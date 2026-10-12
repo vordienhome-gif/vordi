@@ -1,0 +1,52 @@
+{%- comment -%}
+  Строка товара в оптовой таблице. Параметр: row_product.
+  Один вариант — количество вводится прямо в строке.
+  Несколько вариантов — строка раскрывается, количество вводится по каждому варианту.
+{%- endcomment -%}
+{%- assign rp = row_product -%}
+{%- assign rp_multi = false -%}
+{%- if rp.variants.size > 1 -%}{%- assign rp_multi = true -%}{%- endif -%}
+{%- assign rp_v = rp.variants.first -%}
+{%- assign rp_sku = rp_v.sku -%}
+<tr class="ptable__row{% unless rp.available %} is-unavailable{% endunless %}" data-vo-row="{{ rp.id }}">
+  <td class="ptable__prod">
+    <a class="pcell" href="{{ rp.url }}">
+      {%- if rp.first_image -%}
+        <img class="pcell__img" src="{{ rp.first_image | image_url: 112, format: 'webp' }}" alt="{{ rp.title | escape }}" width="56" height="56" loading="lazy">
+      {%- else -%}
+        <span class="pcell__img pcell__img--empty" aria-hidden="true"></span>
+      {%- endif -%}
+      <span class="pcell__txt">
+        <span class="pcell__title">{{ rp.title }}</span>
+        {%- if rp_multi -%}<span class="pcell__sub">Вариантов: {{ rp.variants.size }}</span>{%- endif -%}
+      </span>
+    </a>
+  </td>
+  <td class="ptable__sku">{% if rp_multi %}<span class="muted">—</span>{% else %}{{ rp_sku | default: '—' }}{% endif %}</td>
+  <td class="ptable__stock">{% if rp_multi %}{% if rp.available %}<span class="stock stock--ok">В наличии</span>{% else %}<span class="stock stock--none">Нет в наличии</span>{% endif %}{% else %}{% include 'stock', stock_variant: rp_v %}{% endif %}</td>
+  <td class="ptable__price">
+    {%- if vo_show -%}
+      {%- if rp_multi and rp.price_varies? -%}{%- assign rp_min = rp.price_min | plus: 0 -%}{%- if rp_min > 0 -%}от {{ rp.price_min | money }}{%- else -%}<span class="muted">Цена по запросу</span>{%- endif -%}{%- else -%}{% include 'price-cell', pc_price: rp_v.price %}{%- endif -%}
+    {%- else -%}{% include 'price-note' %}{%- endif -%}
+  </td>
+  <td class="ptable__qty">
+    {%- if rp_multi -%}
+      <button type="button" class="btn btn--ghost btn--sm" data-vo-expand="{{ rp.id }}" aria-expanded="false">Выбрать</button>
+    {%- else -%}
+      {% include 'qty', qty_variant: rp_v, qty_title: rp.title %}
+    {%- endif -%}
+  </td>
+  {%- if vo_show -%}<td class="ptable__sum" data-vo-sum="{{ rp_v.id }}">—</td>{%- endif -%}
+</tr>
+{%- if rp_multi -%}
+  {%- for v in rp.variants -%}
+<tr class="ptable__sub" data-vo-sub="{{ rp.id }}" hidden>
+  <td class="ptable__prod"><span class="pcell__variant">{{ v.title }}</span></td>
+  <td class="ptable__sku">{{ v.sku | default: '—' }}</td>
+  <td class="ptable__stock">{% include 'stock', stock_variant: v %}</td>
+  <td class="ptable__price">{% if vo_show %}{% include 'price-cell', pc_price: v.price %}{% else %}{% include 'price-note' %}{% endif %}</td>
+  <td class="ptable__qty">{% include 'qty', qty_variant: v, qty_title: v.title %}</td>
+  {%- if vo_show -%}<td class="ptable__sum" data-vo-sum="{{ v.id }}">—</td>{%- endif -%}
+</tr>
+  {%- endfor -%}
+{%- endif -%}

@@ -1,0 +1,111 @@
+{%- comment -%}
+  Форма заявки (через common-js: data-feedback-form-wrapper → /client_account/feedback).
+  Параметр form_kind: apply | pricelist | contact
+  Дополнительные поля (data-vo-extra) собираются скриптом в поле content.
+{%- endcomment -%}
+{%- case form_kind -%}
+  {%- when 'pricelist' -%}{%- assign lf_subject = 'Запрос прайс-листа' -%}{%- assign lf_button = 'Запросить прайс-лист' -%}
+  {%- when 'contact' -%}{%- assign lf_subject = 'Сообщение оптовому менеджеру' -%}{%- assign lf_button = 'Отправить сообщение' -%}
+  {%- else -%}{%- assign lf_subject = 'Заявка на оптовое сотрудничество' -%}{%- assign lf_button = 'Отправить заявку' -%}
+{%- endcase -%}
+<form class="lead" id="form" method="post" action="/client_account/feedback" data-feedback-form-wrapper data-vo-lead="{{ form_kind }}" data-vo-subject="{{ lf_subject }}">
+  <input type="hidden" name="subject" value="{{ lf_subject }}" data-feedback-form-field='{"isRequired": false}'>
+  <div class="lead__grid">
+    {%- if form_kind != 'contact' -%}
+    <label class="field">
+      <span class="field__label">Компания или ИП *</span>
+      <input class="input" type="text" data-vo-extra="Компания" required autocomplete="organization">
+    </label>
+    <label class="field">
+      <span class="field__label">ИНН *</span>
+      <input class="input" type="text" inputmode="numeric" pattern="[0-9]{10}|[0-9]{12}" title="10 цифр для организации или 12 для ИП" data-vo-extra="ИНН" required>
+    </label>
+    {%- endif -%}
+    <div class="field" data-feedback-form-field-area>
+      <span class="field__label">Контактное лицо *</span>
+      <input class="input" type="text" name="name" autocomplete="name" data-feedback-form-field='{"isRequired": true, "errorMessage": "Укажите имя"}'>
+      <div class="field__error" data-feedback-form-field-error></div>
+    </div>
+    <div class="field" data-feedback-form-field-area>
+      <span class="field__label">Телефон *</span>
+      <input class="input" type="tel" name="phone" autocomplete="tel" data-feedback-form-field='{"isRequired": true, "errorMessage": "Укажите телефон", "phoneNumberLength": 11}'>
+      <div class="field__error" data-feedback-form-field-error></div>
+    </div>
+    <div class="field" data-feedback-form-field-area>
+      <span class="field__label">E-mail *</span>
+      <input class="input" type="email" name="from" autocomplete="email" data-feedback-form-field='{"isRequired": true, "errorMessage": "Укажите e-mail"}'>
+      <div class="field__error" data-feedback-form-field-error></div>
+    </div>
+    {%- if form_kind != 'contact' -%}
+    <label class="field">
+      <span class="field__label">Город</span>
+      <input class="input" type="text" data-vo-extra="Город" autocomplete="address-level2">
+    </label>
+    <label class="field">
+      <span class="field__label">Сфера деятельности *</span>
+      <select class="select" data-vo-extra="Сфера деятельности" required>
+        <option value="">Выберите…</option>
+        <option>Оптовая торговля</option>
+        <option>Розничный магазин</option>
+        <option>Маркетплейсы (Wildberries, Ozon и др.)</option>
+        <option>Продажи в соцсетях</option>
+        <option>Дропшиппинг</option>
+        <option>Гостиница / HoReCa</option>
+        <option>Дизайн интерьера</option>
+        <option>Индивидуальная коллекция</option>
+        <option>Другое</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field__label">Объём закупок в месяц</span>
+      <select class="select" data-vo-extra="Объём закупок в месяц">
+        <option value="">Не знаю пока</option>
+        <option>до 100 000 ₽</option>
+        <option>100 000 – 300 000 ₽</option>
+        <option>300 000 – 1 000 000 ₽</option>
+        <option>более 1 000 000 ₽</option>
+      </select>
+    </label>
+    <label class="field">
+      <span class="field__label">Интересующие категории</span>
+      <input class="input" type="text" data-vo-extra="Категории" placeholder="Например: постельное бельё, полотенца, халаты">
+    </label>
+    <label class="field">
+      <span class="field__label">Сайт, магазин на маркетплейсе или соцсети</span>
+      <input class="input" type="text" data-vo-extra="Сайт / магазин" placeholder="Ссылка">
+    </label>
+    {%- endif -%}
+  </div>
+  <label class="field field--wide">
+    <span class="field__label">{% if form_kind == 'contact' %}Сообщение *{% else %}Комментарий{% endif %}</span>
+    <textarea class="input" rows="4" data-vo-extra="{% if form_kind == 'contact' %}Сообщение{% else %}Комментарий{% endif %}" {% if form_kind == 'contact' %}required{% endif %}></textarea>
+  </label>
+  <textarea name="content" hidden data-vo-content data-feedback-form-field='{"isRequired": false}'></textarea>
+
+  {%- if settings.feedback_captcha_enabled == '1' or settings.feedback_captcha_enabled == 'on' or settings.feedback_captcha_enabled == true -%}
+  <div class="field" data-feedback-form-field-area>
+    <div data-feedback-form-yandex-captcha='{"isRequired": true, "errorMessage": "{{ messages.yandex_captcha_error | escape }}"}'></div>
+    <div data-feedback-form-recaptcha='{"isRequired": true, "errorMessage": "{{ messages.recaptcha_error | escape }}"}'></div>
+    <div class="field__error" data-feedback-form-field-error></div>
+  </div>
+  {%- endif -%}
+
+  <div class="field" data-feedback-form-field-area>
+    <label class="check">
+      <input type="checkbox" name="agree" data-feedback-form-field='{"isRequired": true, "errorMessage": "Нужно согласие на обработку персональных данных"}'>
+      <span>Я даю <a href="/page/soglasie" target="_blank">согласие на обработку персональных данных</a>.</span>
+    </label>
+    <div class="field__error" data-feedback-form-field-error></div>
+    <p class="muted small">Как мы обрабатываем данные — в <a href="/page/politika" target="_blank">политике обработки персональных данных</a>.</p>
+  </div>
+
+  <div class="lead__foot">
+    <button class="btn btn--primary btn--lg" type="submit">{{ lf_button }}</button>
+    <span class="muted small">Ответим в рабочее время, обычно в течение 1 рабочего дня.</span>
+  </div>
+  <div class="notice notice--ok lead__ok" data-feedback-form-success='{"showTime": 30000}'>
+    {%- if form_kind == 'apply' -%}Спасибо! Заявка отправлена. Менеджер проверит данные компании и пришлёт приглашение в личный кабинет с оптовыми ценами.
+    {%- elsif form_kind == 'pricelist' -%}Спасибо! Прайс-лист будет отправлен на указанный e-mail после проверки компании.
+    {%- else -%}Спасибо! Сообщение отправлено, менеджер скоро свяжется с вами.{%- endif -%}
+  </div>
+</form>

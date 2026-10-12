@@ -1,0 +1,50 @@
+{%- assign tg = settings.telegram | remove: '@' | strip -%}
+{%- assign wa = settings.whatsapp | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+{%- assign phone_link = settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__col footer__col--brand">
+      {% include 'logo' %}
+      <p class="footer__text">Оптовые поставки домашнего текстиля из Турции по России и странам ЕАЭС — для магазинов, продавцов на маркетплейсах, гостиниц и дизайнеров интерьера.</p>
+      {%- if settings.company_legal != blank -%}
+      <p class="footer__legal">{{ settings.company_legal }}{% if settings.company_inn != blank %}, ИНН {{ settings.company_inn }}{% endif %}{% if settings.company_ogrn != blank %}, {{ settings.company_ogrn }}{% endif %}</p>
+      {%- endif -%}
+    </div>
+    <div class="footer__col">
+      <div class="footer__title">Каталог</div>
+      {%- for c1 in collections.all.subcollections limit: 8 -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}<a class="footer__link" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
+    </div>
+    <div class="footer__col">
+      <div class="footer__title">Покупателям</div>
+      {%- assign f_links = linklists.footer-menu.links -%}
+      {%- if f_links.size > 0 -%}
+        {%- for link in f_links -%}{%- assign fl_title = link.title -%}{%- if link.url contains '/page/oferta' -%}{%- assign fl_title = 'Типовой договор поставки' -%}{%- endif -%}<a class="footer__link" href="{{ link.url }}">{{ fl_title }}</a>{%- endfor -%}
+      {%- else -%}
+        <a class="footer__link" href="/page/usloviya">Условия сотрудничества</a>
+        <a class="footer__link" href="/page/dostavka">Доставка</a>
+        <a class="footer__link" href="/page/oplata">Оплата</a>
+        <a class="footer__link" href="/page/o-kompanii">О компании</a>
+        <a class="footer__link" href="/blogs/blog">Блог</a>
+        <a class="footer__link" href="/page/kontakty">Контакты</a>
+        <a class="footer__link" href="/page/prays-list">Прайс-лист</a>
+        <a class="footer__link" href="/page/dropshipping">Дропшиппинг и маркетплейсы</a>
+        <a class="footer__link" href="/page/kollektsii">Индивидуальные коллекции</a>
+        <a class="footer__link" href="/page/rekvizity">Реквизиты</a>
+        <a class="footer__link" href="/page/politika">Политика конфиденциальности</a>
+      {%- endif -%}
+    </div>
+    <div class="footer__col">
+      <div class="footer__title">Контакты</div>
+      {%- if settings.phone != blank -%}<a class="footer__link" href="tel:{{ phone_link }}">{{ settings.phone }}</a>{%- endif -%}
+      {%- if settings.email != blank -%}<a class="footer__link" href="mailto:{{ settings.email }}">{{ settings.email }}</a>{%- endif -%}
+      {%- if tg != blank -%}<a class="footer__link" href="https://t.me/{{ tg }}" target="_blank" rel="noopener">Telegram: @{{ tg }}</a>{%- endif -%}
+      {% include 'messengers', mx_style: 'list' %}
+      {%- if settings.warehouse_address != blank -%}<span class="footer__text">{{ settings.warehouse_address }}</span>{%- endif -%}
+      {%- if settings.work_hours != blank -%}<span class="footer__text">{{ settings.work_hours }}</span>{%- endif -%}
+    </div>
+  </div>
+  <div class="wrap footer__bottom">
+    <span>© {{ 'now' | date: '%Y' }} {{ settings.brand_name | default: account.title }}. Информация на сайте не является публичной офертой.</span>
+    <span><a href="/page/politika">Политика обработки персональных данных</a> · <a href="/page/oferta">Типовой договор поставки</a></span>
+  </div>
+</footer>

@@ -1,0 +1,11 @@
+{%- if vo_state == 'guest' -%}
+<div class="gate">
+  <div class="gate__txt"><b>Оптовые цены видны после входа.</b> Работаем с юрлицами и ИП: магазинами, продавцами на маркетплейсах и в соцсетях, дропшиппинг-проектами, HoReCa.</div>
+  <div class="gate__act"><a class="btn btn--primary btn--sm" href="/page/stat-partnerom">Стать оптовым клиентом</a><a class="btn btn--ghost btn--sm" href="/client_account/login">Войти</a></div>
+</div>
+{%- elsif vo_state == 'pending' -%}
+<div class="gate gate--pending">
+  <div class="gate__txt"><b>Ваша заявка на рассмотрении.</b> Менеджер проверит данные компании и откроет цены — обычно в течение рабочего дня.</div>
+  <div class="gate__act"><a class="btn btn--ghost btn--sm" href="/page/kontakty#form">Связаться с менеджером</a></div>
+</div>
+{%- endif -%}

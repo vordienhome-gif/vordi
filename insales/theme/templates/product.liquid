@@ -1,0 +1,196 @@
+{%- include 'vo-access' -%}
+{%- assign pv = product.variants.first -%}
+{%- assign p_multi = false -%}
+{%- if product.variants.size > 1 -%}{%- assign p_multi = true -%}{%- endif -%}
+{%- assign p_matrix = false -%}
+{%- if p_multi and product.options.size == 2 -%}{%- assign p_matrix = true -%}{%- endif -%}
+{%- assign p_brand = '' -%}
+{%- for prop in product.properties -%}
+  {%- assign ph = prop.handle | default: prop.permalink -%}
+  {%- if ph == 'brand' or ph == 'vendor' or prop.title == 'Бренд' or prop.title == 'Производитель' -%}{%- assign p_brand = prop.characteristics.first.title -%}{%- endif -%}
+{%- endfor -%}
+
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+
+<div class="wrap product" data-vo-product="{{ product.id }}">
+  <div class="product__gallery" data-vo-gallery>
+    <div class="gallery__main">
+      {%- if product.images.size > 0 -%}
+        <a href="{{ product.first_image.original_url }}" target="_blank" rel="noopener" data-vo-gallery-main-link>
+          <img data-vo-gallery-main src="{{ product.first_image | image_url: 800, format: 'webp' }}" alt="{{ product.title | escape }}" width="480" height="480" fetchpriority="high" decoding="async">
+        </a>
+      {%- else -%}
+        <div class="gallery__empty">Фото скоро появится</div>
+      {%- endif -%}
+    </div>
+    {%- if product.images.size > 1 -%}
+    <ul class="gallery__thumbs" role="list">
+      {%- for image in product.images -%}
+        <li><button type="button" class="gallery__thumb{% if forloop.first %} is-active{% endif %}"
+                data-vo-thumb="{{ image | image_url: 800, format: 'webp' }}" data-vo-orig="{{ image.original_url }}" aria-label="Фото {{ forloop.index }}">
+          <img src="{{ image | image_url: 128, format: 'webp' }}" alt="" width="64" height="64" loading="lazy" decoding="async">
+        </button></li>
+      {%- endfor -%}
+    </ul>
+    {%- endif -%}
+  </div>
+
+  <div class="product__info">
+    {%- if p_brand != blank -%}<div class="product__brand">{{ p_brand }}</div>{%- endif -%}
+    <h1 class="product__title">{{ product.title }}</h1>
+    <div class="product__meta">
+      {%- unless p_multi -%}{%- if pv.sku != blank -%}<span>Артикул: <b>{{ pv.sku }}</b></span>{%- endif -%}{%- endunless -%}
+      {%- if product.available -%}<span class="stock stock--ok">В наличии</span>{%- else -%}<span class="stock stock--none">Нет в наличии</span>{%- endif -%}
+      {%- if p_multi -%}<span class="muted">Вариантов: {{ product.variants.size }}</span>{%- endif -%}
+    </div>
+
+    <div class="product__price">
+      {%- if vo_show -%}
+        {%- assign p_min = product.price_min | plus: 0 -%}{%- assign p_one = pv.price | plus: 0 -%}<span class="price">{% if p_multi and product.price_varies? and p_min > 0 %}от {{ product.price_min | money }}{% elsif p_one > 0 %}{{ pv.price | money }}{% else %}Цена по запросу{% endif %}</span>
+        {%- if vo_state == 'approved' and vo_group != blank -%}<span class="muted">цена для группы «{{ vo_group }}»</span>{%- endif -%}
+      {%- else -%}
+        {% include 'gate-banner' %}
+      {%- endif -%}
+    </div>
+
+    {%- if product.short_description != blank -%}<div class="rte product__short">{{ product.short_description }}</div>{%- endif -%}
+
+    {%- if p_matrix -%}
+      {%- assign o1 = product.options.first -%}
+      {%- assign o2 = product.options.last -%}
+      <div class="matrix-wrap">
+        <table class="matrix" data-vo-table>
+          <thead>
+            <tr><th scope="col">{{ o1.title }} \ {{ o2.title }}</th>{%- for val2 in o2.values -%}<th scope="col">{{ val2.title }}</th>{%- endfor -%}</tr>
+          </thead>
+          <tbody>
+          {%- for val1 in o1.values -%}
+            <tr>
+              <th scope="row">{{ val1.title }}</th>
+              {%- for val2 in o2.values -%}
+                {%- assign cell_v = nil -%}
+                {%- for v in product.variants -%}
+                  {%- assign m1 = false -%}{%- assign m2 = false -%}
+                  {%- for ov in v.option_values -%}
+                    {%- if ov.option_name.title == o1.title and ov.title == val1.title -%}{%- assign m1 = true -%}{%- endif -%}
+                    {%- if ov.option_name.title == o2.title and ov.title == val2.title -%}{%- assign m2 = true -%}{%- endif -%}
+                  {%- endfor -%}
+                  {%- if m1 and m2 -%}{%- assign cell_v = v -%}{%- endif -%}
+                {%- endfor -%}
+                <td class="matrix__cell">
+                  {%- if cell_v -%}
+                    {% include 'stock', stock_variant: cell_v %}
+                    {%- if vo_show -%}
+                      {%- if product.price_varies? -%}<span class="matrix__price">{% include 'price-cell', pc_price: cell_v.price %}</span>{%- endif -%}
+                      {% include 'qty', qty_variant: cell_v, qty_title: cell_v.title %}
+                    {%- endif -%}
+                  {%- else -%}<span class="muted">—</span>{%- endif -%}
+                </td>
+              {%- endfor -%}
+            </tr>
+          {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    {%- elsif p_multi -%}
+      <div class="ptable-wrap">
+        <table class="ptable ptable--variants" data-vo-table>
+          <thead><tr><th scope="col">Вариант</th><th scope="col">Артикул</th><th scope="col">Остаток</th><th scope="col" class="ta-r">Цена</th>{% if vo_show %}<th scope="col" class="ta-c">Количество</th><th scope="col" class="ta-r">Сумма</th>{% endif %}</tr></thead>
+          <tbody>
+          {%- for v in product.variants -%}
+            <tr>
+              <td>{{ v.title }}</td>
+              <td class="ptable__sku">{{ v.sku | default: '—' }}</td>
+              <td>{% include 'stock', stock_variant: v %}</td>
+              <td class="ptable__price">{% if vo_show %}{% include 'price-cell', pc_price: v.price %}{% else %}{% include 'price-note' %}{% endif %}</td>
+              {%- if vo_show -%}
+              <td class="ptable__qty">{% include 'qty', qty_variant: v, qty_title: v.title %}</td>
+              <td class="ptable__sum" data-vo-sum="{{ v.id }}">—</td>
+              {%- endif -%}
+            </tr>
+          {%- endfor -%}
+          </tbody>
+        </table>
+      </div>
+    {%- else -%}
+      {%- if vo_show -%}
+      <div class="product__single" data-vo-table>
+        <span class="muted">Остаток: {% include 'stock', stock_variant: pv %}</span>
+        {% include 'qty', qty_variant: pv, qty_title: product.title %}
+        <span class="product__sum">Сумма: <b data-vo-sum="{{ pv.id }}">—</b></span>
+      </div>
+      {%- endif -%}
+    {%- endif -%}
+
+    {%- if vo_show -%}
+    <div class="product__actions">
+      <button type="button" class="btn btn--primary btn--lg" data-vo-bulk-add disabled>{% include 'icon', icon_name: 'cart' %} Добавить в корзину</button>
+      <a class="btn btn--ghost btn--lg" href="{{ cart_url | default: '/cart_items' }}">Перейти в корзину</a>
+    </div>
+    <p class="muted small" data-vo-mintext-inline>{% if vo_min > 0 %}Минимальная сумма заказа — {{ vo_min | money }}, можно комбинировать любые товары.{% endif %}</p>
+    {%- if product.images.size > 0 -%}
+    <details class="downloads">
+      <summary>{% include 'icon', icon_name: 'download' %} Фото товара для вашего магазина и маркетплейсов ({{ product.images.size }})</summary>
+      <ul>
+        {%- for image in product.images -%}<li><a href="{{ image.original_url }}" target="_blank" rel="noopener" download>Фото {{ forloop.index }} — оригинал</a></li>{%- endfor -%}
+      </ul>
+      <p class="muted small">Фото можно использовать в карточках этих товаров в вашем магазине и на маркетплейсах. Нужны другие ракурсы или описание для маркетплейса — <a href="/page/kontakty#form">напишите менеджеру</a>.</p>
+    </details>
+    {%- endif -%}
+    {%- endif -%}
+
+    <ul class="product__facts">
+      <li>{% include 'icon', icon_name: 'truck' %}<span>{{ settings.free_delivery_text | default: 'Бесплатная доставка по Москве и МО' }}. Регионы — СДЭК или ТК за счёт покупателя.</span></li>
+      <li>{% include 'icon', icon_name: 'doc' %}<span>Счёт, УПД, работа через ЭДО. Маркированные товары — с кодами «Честный ЗНАК».</span></li>
+      <li>{% include 'icon', icon_name: 'box' %}<span>Отгрузка после подтверждения заказа менеджером и оплаты.</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="wrap product__more">
+  {%- if product.description != blank -%}
+  <section class="block">
+    <h2 class="block__title">Описание</h2>
+    <div class="rte">{{ product.description }}</div>
+  </section>
+  {%- endif -%}
+  {%- comment -%}Служебные свойства (учёт, категории маркетплейсов, флаги true/false) покупателю не показываем{%- endcomment -%}
+  {%- capture props_rows -%}
+      {%- for prop in product.properties -%}
+      {%- assign pv = '' -%}
+      {%- for c in prop.characteristics -%}{%- assign pv = pv | append: c.title -%}{%- unless forloop.last -%}{%- assign pv = pv | append: ', ' -%}{%- endunless -%}{%- endfor -%}
+      {%- assign pt = prop.title | downcase -%}
+      {%- assign skip = false -%}
+      {%- if pv == blank or pv == 'false' or pv == 'true' -%}{%- assign skip = true -%}{%- endif -%}
+      {%- if pt contains 'категория' or pt contains '(1с)' or pt contains 'комиссион' or pt contains 'прослежив' or pt == 'метка' -%}{%- assign skip = true -%}{%- endif -%}
+      {%- unless skip -%}<tr><th scope="row">{{ prop.title }}</th><td>{{ pv }}</td></tr>{%- endunless -%}
+      {%- endfor -%}
+  {%- endcapture -%}
+  {%- if props_rows != blank -%}
+  <section class="block">
+    <h2 class="block__title">Характеристики</h2>
+    <table class="props">{{ props_rows }}</table>
+  </section>
+  {%- endif -%}
+
+  {%- assign rel = product.related_products -%}
+  {%- if rel.size == 0 -%}{%- assign rel = product.similar_products -%}{%- endif -%}
+  {%- if rel.size > 0 -%}
+  <section class="block">
+    <h2 class="block__title">С этим товаром заказывают</h2>
+    <div class="pgrid pgrid--catalog">{%- for card_product in rel limit: 5 -%}{% include 'product-card' %}{%- endfor -%}</div>
+  </section>
+  {%- endif -%}
+</div>
+{% include 'bulkbar' %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product.title | json }},
+  {%- if product.first_image -%}"image": {{ product.first_image.original_url | json }},{%- endif -%}
+  {%- if pv.sku != blank -%}"sku": {{ pv.sku | json }},{%- endif -%}
+  {%- if p_brand != blank -%}"brand": {"@type": "Brand", "name": {{ p_brand | json }}},{%- endif -%}
+  "description": {{ product.description | strip_html | strip_newlines | truncate: 300 | json }}
+}
+</script>

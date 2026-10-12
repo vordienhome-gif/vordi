@@ -1,0 +1,29 @@
+{%- include 'vo-access' -%}
+{%- assign page_handle = page.url | split: '/' | last -%}
+{%- comment -%}Формы подключаются по адресу страницы — отдельный шаблон выбирать не нужно{%- endcomment -%}
+{%- assign page_form = '' -%}
+{%- if page_handle == 'stat-partnerom' -%}{%- assign page_form = 'apply' -%}
+{%- elsif page_handle == 'prays-list' -%}{%- assign page_form = 'pricelist' -%}
+{%- elsif page_handle == 'kontakty' -%}{%- assign page_form = 'contact' -%}
+{%- endif -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap page{% if page_form != '' %} page--form{% endif %}">
+  <article class="page__body">
+    <h1 class="page-title">{{ page.title }}</h1>
+    {%- if page_form == 'contact' -%}{% include 'contact-cards' %}{% include 'map' %}{%- endif -%}
+    {%- if page.content != blank -%}<div class="rte">{{ page.content }}</div>{%- endif -%}
+    {%- if page_handle == 'rekvizity' -%}{% include 'map' %}{%- endif -%}
+    {%- if page_form == 'apply' and vo_state == 'approved' -%}
+      <div class="notice notice--ok">Ваша компания уже подтверждена — оптовые цены открыты. <a href="/collection/all">Перейти в каталог</a></div>
+    {%- elsif page_form == 'contact' -%}
+      <h2 class="block__title">Написать оптовому менеджеру</h2>
+      {% include 'lead-form', form_kind: 'contact' %}
+    {%- elsif page_form != '' -%}
+      {% include 'lead-form', form_kind: page_form %}
+    {%- endif -%}
+  </article>
+  <aside class="page__side">
+    {%- if page_form == 'apply' -%}{% include 'steps-side' %}{%- endif -%}
+    {% include 'side-info' %}
+  </aside>
+</div>

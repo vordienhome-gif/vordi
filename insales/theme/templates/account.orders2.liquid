@@ -1,0 +1,43 @@
+{% content_for 'title' %}История заказов{% end_content_for %}
+{%- include 'vo-access' -%}
+<div class="orders">
+  {%- if orders == empty or orders.size == 0 -%}
+    <div class="empty">
+      <p>Вы ещё не оформили ни одного заказа.</p>
+      <a class="btn btn--primary" href="/collection/all">Перейти в каталог</a>
+    </div>
+  {%- else -%}
+  <div class="ptable-wrap">
+    <table class="ptable orders__table">
+      <thead>
+        <tr><th scope="col">Дата</th><th scope="col">Номер</th><th scope="col">Статус</th><th scope="col">Оплата</th><th scope="col" class="ta-r">Сумма</th><th scope="col"><span class="sr-only">Действия</span></th></tr>
+      </thead>
+      <tbody>
+      {%- for order in orders -%}
+        {%- assign order_items = '' -%}{%- assign sep = '' -%}
+        {%- for line in order.order_lines -%}{%- if line.variant_id -%}{%- capture order_items -%}{{ order_items }}{{ sep }}"{{ line.variant_id }}":{{ line.quantity | round }}{%- endcapture -%}{%- assign sep = ',' -%}{%- endif -%}{%- endfor -%}
+        <tr>
+          <td>{{ order.creation_date | date: '%d.%m.%Y' }}</td>
+          <td><a href="{{ order.url }}">{{ order.number }}</a></td>
+          <td>{{ order.custom_status_title }}</td>
+          <td>{% if order.paid? %}<span class="stock stock--ok">Оплачен</span>{% else %}<span class="stock stock--order">Ожидает оплаты</span>{% endif %}</td>
+          <td class="ta-r">{{ order.total_price | money }}</td>
+          <td class="ta-r">
+            {%- if vo_state == 'approved' -%}<button type="button" class="btn btn--ghost btn--sm" data-vo-repeat="{{ order.url }}"{% if order_items != blank %} data-vo-repeat-items='{ {{ order_items }} }'{% endif %}>{% include 'icon', icon_name: 'repeat' %} Повторить</button>{%- endif -%}
+          </td>
+        </tr>
+      {%- endfor -%}
+      </tbody>
+      <tfoot>
+        <tr><td colspan="4">Сумма выполненных заказов</td><td class="ta-r"><b>{{ client.turnover | money }}</b></td><td></td></tr>
+      </tfoot>
+    </table>
+  </div>
+  <p class="muted small">«Повторить» добавляет товары прошлого заказа в корзину по текущим ценам и остаткам. Перед оформлением проверьте количество.</p>
+  {%- endif -%}
+  <div class="account__cards">
+    <a class="card-link" href="/collection/all"><b>Каталог с вашими ценами</b><span>Собирайте заказ таблицей</span></a>
+    <a class="card-link" href="/page/prays-list"><b>Прайс-лист в Excel</b><span>Запросить актуальный файл</span></a>
+    <a class="card-link" href="/page/kontakty#form"><b>Оптовый менеджер</b><span>Вопросы по заказу и наличию</span></a>
+  </div>
+</div>

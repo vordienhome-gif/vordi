@@ -1,0 +1,190 @@
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="format-detection" content="telephone=no">
+{%- comment -%}
+  SEO: заголовок и описание страницы. Цены в мета-тегах не выводим (оптовые цены — только подтверждённым клиентам).
+  Бренд добавляется в конец заголовка, если его там ещё нет.
+{%- endcomment -%}
+{%- assign seo_brand = account.title | default: 'Elitmosteks' -%}
+{%- assign seo_title = title -%}
+{%- assign seo_desc = description -%}
+{%- assign seo_image = '' -%}
+{%- assign seo_url = account.url -%}
+{%- assign og_type = 'website' -%}
+{%- if template == 'index' -%}
+  {%- assign seo_title = settings.seo_home_title | default: 'Турецкий домашний текстиль оптом от поставщика в Москве' -%}
+  {%- assign seo_desc = settings.seo_home_description | default: 'Оптовые поставки постельного белья, полотенец, пледов и халатов из Турции для магазинов, продавцов Wildberries и Ozon, гостиниц. Склад в Балашихе, доставка по России, ЭДО и «Честный ЗНАК».' -%}
+{%- elsif template contains 'product' -%}
+  {%- assign seo_title = product.html_title | default: product.title -%}
+  {%- assign seo_desc = product.meta_description | default: product.short_description | default: product.description | strip_html | strip_newlines | truncate: 200 -%}
+  {%- if product.first_image -%}{%- assign seo_image = product.first_image.original_url -%}{%- endif -%}
+  {%- assign seo_url = account.url | append: product.canonical_url -%}
+  {%- assign og_type = 'product' -%}
+{%- elsif template contains 'collection' -%}
+  {%- if collection.html_title != blank -%}{%- assign seo_title = collection.html_title -%}{%- else -%}{%- assign seo_title = collection.title | append: ' оптом из Турции' -%}{%- endif -%}
+  {%- if collection.meta_description != blank -%}{%- assign seo_desc = collection.meta_description -%}{%- else -%}{%- capture seo_desc -%}{{ collection.title }} оптом от поставщика турецкого текстиля Elitmosteks: {{ collection.products_count }} товаров в наличии на складе в Балашихе. Работаем с юрлицами и ИП, доставка по России.{%- endcapture -%}{%- endif -%}
+  {%- if collection.image -%}{%- unless collection.image.large_url contains 'no_image' -%}{%- assign seo_image = collection.image.original_url -%}{%- endunless -%}{%- endif -%}
+  {%- assign seo_url = account.url | append: collection.url -%}
+{%- elsif template contains 'article' -%}
+  {%- assign seo_title = article.html_title | default: article.title -%}
+  {%- assign seo_desc = article.meta_description | default: article.content | strip_html | strip_newlines | truncate: 200 -%}
+  {%- if article.image -%}{%- assign seo_image = article.image.original_url -%}{%- endif -%}
+  {%- assign seo_url = account.url | append: article.url -%}
+  {%- assign og_type = 'article' -%}
+{%- elsif template contains 'blog' -%}
+  {%- assign seo_title = blog.html_title | default: blog.title -%}
+  {%- assign seo_url = account.url | append: blog.url -%}
+{%- elsif template contains 'page' -%}
+  {%- assign seo_title = title | default: page.title -%}
+  {%- assign seo_desc = description | default: page.content | strip_html | strip_newlines | truncate: 200 -%}
+  {%- assign seo_url = account.url | append: page.url -%}
+{%- elsif template contains 'cart' -%}{%- assign seo_title = 'Корзина' -%}
+{%- elsif template contains 'search' -%}{%- assign seo_title = 'Поиск по каталогу' -%}
+{%- endif -%}
+{%- if filter and filter.meta_description != blank -%}{%- assign seo_desc = filter.meta_description -%}{%- endif -%}
+{%- if seo_title == blank -%}{%- assign seo_title = seo_brand -%}{%- endif -%}
+{%- assign seo_title_dc = seo_title | downcase -%}
+{%- assign seo_brand_dc = seo_brand | downcase -%}
+{%- unless seo_title_dc contains seo_brand_dc -%}{%- assign seo_title = seo_title | append: ' — ' | append: seo_brand -%}{%- endunless -%}
+{%- if seo_desc == blank -%}{%- assign seo_desc = 'Оптовый поставщик турецкого домашнего текстиля Elitmosteks: постельное бельё, полотенца, пледы, халаты. Работаем с юрлицами и ИП.' -%}{%- endif -%}
+{%- if seo_image == blank -%}{%- for c1 in collections.all.subcollections -%}{%- if seo_image == blank and c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign seo_image = c1.image.original_url -%}{%- endunless -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+<title>{{ seo_title }}</title>
+<meta name="description" content="{{ seo_desc | strip | escape }}">
+{%- if keywords != blank -%}<meta name="keywords" content="{{ keywords | escape }}">{%- endif -%}
+{%- if template contains 'cart' or template contains 'search' or template contains 'page_404' or template contains 'compare' or template contains 'favorite' -%}
+<meta name="robots" content="noindex,follow">
+{%- else -%}
+<meta name="robots" content="index,follow">
+{%- endif -%}
+{%- unless template contains 'cart' or template contains 'search' or template contains 'page_404' -%}
+<link rel="canonical" href="{% if template == 'index' %}{{ account.url }}/{% else %}{{ seo_url }}{% endif %}">
+{%- endunless -%}
+{%- if template contains 'blog' -%}<link rel="alternate" type="application/rss+xml" title="{{ blog.title | escape }}" href="{{ account.url }}{{ blog.url }}.atom">{%- endif -%}
+<meta property="og:type" content="{{ og_type }}">
+<meta property="og:title" content="{{ seo_title | escape }}">
+<meta property="og:description" content="{{ seo_desc | strip | escape }}">
+<meta property="og:url" content="{% if template == 'index' %}{{ account.url }}/{% else %}{{ seo_url }}{% endif %}">
+{%- if seo_image != blank -%}<meta property="og:image" content="{{ seo_image }}">{%- endif -%}
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:site_name" content="{{ seo_brand | escape }}">
+<meta property="og:locale" content="ru_RU">
+{%- if template == 'index' -%}
+{%- assign ld_phone = settings.phone | default: account.phone -%}
+<script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Organization","@id":"{{ account.url }}/#org","name":"{{ seo_brand }}","legalName":"ООО «Элитмостекс»","url":"{{ account.url }}/","logo":"{{ 'favicon.png' | asset_url }}","taxID":"5001106601","telephone":"{{ ld_phone }}","address":{"@type":"PostalAddress","addressCountry":"RU","addressRegion":"Московская область","addressLocality":"Балашиха","streetAddress":"Щёлковское шоссе, вл. 141"}{% assign tg_ld = settings.telegram | remove: '@' | strip %}{% if tg_ld != blank %},"sameAs":["https://t.me/{{ tg_ld }}"]{% endif %}},{"@type":"WebSite","@id":"{{ account.url }}/#site","url":"{{ account.url }}/","name":"{{ seo_brand }}","inLanguage":"ru","publisher":{"@id":"{{ account.url }}/#org"},"potentialAction":{"@type":"SearchAction","target":"{{ account.url }}/search?q={search_term_string}","query-input":"required name=search_term_string"}}]}</script>
+{%- endif -%}
+<link rel="preconnect" href="https://cdn.insales-shop.ru" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.insales-shop.ru">
+<link rel="preload" href="{{ 'golos-text-cyrillic-400-normal.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="{{ 'golos-text-cyrillic-600-normal.woff2' | asset_url }}" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="{{ 'favicon.png' | asset_url }}" type="image/png">
+<link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
+<link rel="stylesheet" href="{{ 'extra.css' | asset_url }}">
+{%- comment -%}v2 (12.10.2026): стили встроены — CDN медиафайлов темы обновляется с задержкой{%- endcomment -%}
+<style>
+/* ===================================================================
+   v2 (12.10.2026): упрощённый дизайн в стиле маркетплейса, цены открыты
+   =================================================================== */
+:root { --bg: #FFFFFF; --surface-2: #F4F5F7; --line: #E6E8EC; --line-2: #F0F1F4; --radius: 14px; --shadow: 0 4px 18px rgba(20, 24, 33, .08); }
+body { background: var(--bg); }
+.section { padding-top: 28px; }
+.section__title { font-size: 22px; }
+.page-title__count { font-size: 15px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+.btn { border-radius: 12px; }
+.btn--soft { background: var(--surface-2); color: var(--ink); }
+.btn--soft:hover { background: #E9EBEF; color: var(--ink); }
+
+/* Шапка: одна строка + полоса разделов */
+.header { background: #fff; border-bottom: 0; box-shadow: 0 1px 0 var(--line); }
+.header__in { flex-wrap: nowrap; min-height: 68px; gap: 14px; }
+.hcat { position: static; }
+.hcat__btn { min-height: 44px; padding: 0 16px; }
+.hcat .mega { display: none; position: absolute; left: 0; right: 0; top: 100%; z-index: 50; background: #fff; border-top: 1px solid var(--line); box-shadow: var(--shadow); }
+.hcat:hover .mega, .hcat:focus-within .mega { display: block; }
+.search { flex: 1 1 auto; max-width: none; border: 2px solid var(--blue); border-radius: 12px; }
+.search:focus-within { box-shadow: 0 0 0 3px rgba(30, 78, 140, .15); }
+.search__input { min-height: 40px; font-size: 15px; }
+.search__btn { color: var(--blue); }
+.header__actions { gap: 4px; margin-left: 0; }
+.hicon { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 64px; padding: 4px 6px; color: var(--ink-2); font-size: 12px; border-radius: 10px; white-space: nowrap; }
+.hicon:hover { color: var(--blue); text-decoration: none; background: var(--surface-2); }
+.hicon .ico { width: 22px; height: 22px; }
+.cats-nav { border-top: 1px solid var(--line-2); }
+.cats-nav__in { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-top: 6px; padding-bottom: 6px; }
+.cats-nav__in::-webkit-scrollbar { display: none; }
+.cats-nav__link { flex: none; padding: 6px 12px; border-radius: 999px; color: var(--ink-2); font-size: 14px; white-space: nowrap; }
+.cats-nav__link:hover { background: var(--surface-2); color: var(--ink); text-decoration: none; }
+@media (max-width: 960px) {
+  .header__in { flex-wrap: wrap; min-height: 56px; gap: 8px 10px; }
+  .hcat { display: none; }
+  .search { order: 5; flex-basis: 100%; }
+  .header .logo { flex: 1; }
+  .hicon { min-width: 0; font-size: 11px; }
+}
+
+/* Баннер на главной */
+.promo { padding-top: 20px; }
+.promo__in { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 28px 32px; border-radius: 20px; color: #fff; background: linear-gradient(110deg, #1E4E8C 0%, #2E6CB8 100%); }
+.promo__title { font-size: 30px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.01em; }
+.promo__lead { margin: 0; opacity: .9; font-size: 16px; }
+@media (max-width: 640px) { .promo__in { padding: 20px; } .promo__title { font-size: 22px; } .promo__lead { font-size: 14px; } }
+
+/* Разделы — круглые плитки */
+.cats { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; }
+.cat { background: transparent; border: 0; padding: 0; align-items: center; text-align: center; gap: 8px; }
+.cat:hover { box-shadow: none; }
+.cat__img { width: 100%; max-width: 120px; aspect-ratio: 1; border-radius: 50%; object-fit: cover; background: var(--surface-2); margin: 0 auto; transition: transform .2s; }
+.cat:hover .cat__img { transform: scale(1.04); }
+.cat__title { font-weight: 500; font-size: 14px; line-height: 1.25; }
+@media (max-width: 1000px) { .cats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; } .cat__title { font-size: 12px; } }
+
+/* Карточка товара */
+.pgrid, .pgrid--catalog { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px 16px; }
+.catalog .pgrid--catalog { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1200px) { .pgrid, .pgrid--catalog { grid-template-columns: repeat(4, minmax(0, 1fr)); } .catalog .pgrid--catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .pgrid, .pgrid--catalog, .catalog .pgrid--catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .pgrid, .pgrid--catalog, .catalog .pgrid--catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 10px; } }
+.pcard { background: transparent; border: 0; border-radius: 0; overflow: visible; }
+.pcard:hover { box-shadow: none; }
+.pcard.is-unavailable { opacity: 1; }
+.pcard__img { aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; background: var(--surface-2); }
+.pcard.is-unavailable .pcard__img img { opacity: .55; }
+.pcard__noimg { display: flex; align-items: center; justify-content: center; height: 100%; color: #9AA0AA; font-size: 13px; background: var(--surface-2); }
+.pcard__badge { position: absolute; left: 8px; top: 8px; padding: 3px 8px; border-radius: 8px; background: rgba(255,255,255,.92); color: var(--ink-2); font-size: 12px; font-weight: 600; }
+.pcard__badge--sale { background: #E5484D; color: #fff; }
+.pcard__body { padding: 10px 2px 0; gap: 4px; }
+.pcard__price { order: -1; margin: 0; padding: 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pcard__price b { font-size: 19px; font-weight: 700; color: var(--ink); }
+.pcard__price s { font-size: 13px; color: var(--muted); }
+.pcard__ask { font-size: 14px; color: var(--muted); font-weight: 500; }
+.pcard__title { font-size: 14px; font-weight: 400; color: var(--ink-2); -webkit-line-clamp: 2; line-height: 1.35; }
+.pcard__stock { font-size: 12px; color: var(--green); }
+.pcard__buy { margin-top: 8px; }
+.pcard__buy .btn { min-height: 38px; }
+.pcard__buy .btn.is-added { background: var(--green); }
+@media (max-width: 640px) { .pcard__price b { font-size: 16px; } .pcard__title { font-size: 13px; } }
+
+/* Каталог */
+@media (min-width: 961px) { .catalog { grid-template-columns: 220px minmax(0, 1fr); } }
+.side { border: 0; padding: 0; background: transparent; }
+.side__link.is-active { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+@media (max-width: 960px) { .catalog__side { display: none; } }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 0 0 18px; padding-bottom: 2px; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; padding: 8px 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); font-size: 14px; white-space: nowrap; }
+.chip span { color: var(--muted); font-size: 12px; margin-left: 2px; }
+.chip:hover { background: #E9EBEF; text-decoration: none; color: var(--ink); }
+.more { display: flex; justify-content: center; margin-top: 24px; }
+
+/* Товар */
+.product__price .price { font-size: 30px; }
+
+/* Подвал */
+.footer { margin-top: 40px; }
+.product__more .block:has(.pgrid) { background: transparent; border: 0; padding: 0; }
+
+</style>
+{%- capture meta_settings_value -%}{"feedback_captcha_enabled": {% if settings.feedback_captcha_enabled == '1' or settings.feedback_captcha_enabled == 'on' or settings.feedback_captcha_enabled == true %}true{% else %}false{% endif %} }{%- endcapture -%}
+<meta data-config="{{ meta_settings_value | escape }}" name="theme-settings" content="">
+{% include 'pro-styles' %}

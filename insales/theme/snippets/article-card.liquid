@@ -1,0 +1,6 @@
+<a class="post" href="{{ article.url }}">
+  {%- if article.image -%}<img class="post__img" src="{{ article.image | image_url: 640, format: 'webp' }}" alt="" loading="lazy" decoding="async" width="480" height="300">{%- else -%}<span class="post__img--empty" aria-hidden="true"></span>{%- endif -%}
+  <span class="post__date">{{ article.created_at | date: '%d.%m.%Y' }}</span>
+  <span class="post__title">{{ article.title }}</span>
+  <span class="post__text">{% if article.has_preview? %}{{ article.preview | strip_html | truncate: 160 }}{% else %}{{ article.content | strip_html | truncate: 160 }}{% endif %}</span>
+</a>

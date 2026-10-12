@@ -1,0 +1,3 @@
+{%- comment -%}Цена для одобренного клиента. Параметр: pc_price. Нулевая цена → «по запросу» (цена не заведена в МойСклад).{%- endcomment -%}
+{%- assign pc_num = pc_price | plus: 0 -%}
+{%- if pc_num > 0 -%}{{ pc_price | money }}{%- else -%}<span class="muted">Цена по запросу</span>{%- endif -%}

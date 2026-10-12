@@ -1,0 +1,11 @@
+{%- comment -%}Яндекс Карты: виджет без API-ключа. Адрес/запрос берётся из настройки map_query.{%- endcomment -%}
+{%- assign map_q = settings.map_query | default: settings.warehouse_address -%}
+{%- if map_q != blank -%}
+<section class="map" aria-label="Склад на карте">
+  <h2 class="block__title">Склад на карте</h2>
+  <div class="map__frame">
+    <iframe src="https://yandex.ru/map-widget/v1/?text={{ map_q | url_encode }}&amp;z=16&amp;l=map" title="Яндекс Карты: {{ map_q | escape }}" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+  <p class="map__links"><a href="https://yandex.ru/maps/?text={{ map_q | url_encode }}&amp;rtext=~{{ map_q | url_encode }}" target="_blank" rel="noopener">Построить маршрут в Яндекс Картах</a></p>
+</section>
+{%- endif -%}

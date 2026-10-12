@@ -1,0 +1,24 @@
+{%- include 'vo-access' -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap page">
+  <article class="page__body article">
+    <p class="muted">{{ article.created_at | date: '%d.%m.%Y' }}</p>
+    <h1 class="page-title">{{ article.title }}</h1>
+    {%- if article.image -%}<img class="article__img" src="{{ article.image | image_url: 1100, format: 'webp' }}" alt="{{ article.title | escape }}" fetchpriority="high" decoding="async">{%- endif -%}
+    <div class="rte">{{ article.content }}</div>
+    <div class="article__cta">
+      <b>Хотите закупать турецкий текстиль оптом?</b>
+      <span>Минимальный заказ — {{ settings.min_order | default: '50000' | plus: 0 | money }}, персональные цены после подтверждения компании.</span>
+      <a class="btn btn--primary" href="/page/stat-partnerom">Стать оптовым клиентом</a>
+    </div>
+  </article>
+  <aside class="page__side">
+    <div class="side">
+      <div class="side__title">Другие статьи</div>
+      {%- for a in blog.articles limit: 6 -%}{%- unless a.id == article.id -%}<a class="side__link" href="{{ a.url }}">{{ a.title }}</a>{%- endunless -%}{%- endfor -%}
+    </div>
+  </aside>
+</div>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Article","headline":{{ article.title | json }},"datePublished":"{{ article.created_at | date: '%Y-%m-%d' }}"{% if article.image %},"image":{{ article.image.original_url | json }}{% endif %}}
+</script>

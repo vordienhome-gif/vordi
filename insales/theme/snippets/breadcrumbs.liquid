@@ -1,0 +1,21 @@
+<nav class="crumbs" aria-label="Навигация">
+  <a href="/">Главная</a>
+  {%- if template contains 'collection' or template contains 'product' -%}
+    {%- for c in current_collections -%}
+      {%- unless c.handle == 'all' and forloop.length > 1 -%}
+      <span class="crumbs__sep">/</span>{% if forloop.last and template contains 'collection' %}<span>{{ c.title }}</span>{% else %}<a href="{{ c.url }}">{{ c.title }}</a>{% endif %}
+      {%- endunless -%}
+    {%- endfor -%}
+    {%- if template contains 'product' -%}<span class="crumbs__sep">/</span><span>{{ product.title }}</span>{%- endif -%}
+  {%- elsif template contains 'article' -%}
+    <span class="crumbs__sep">/</span><a href="{{ blog.url }}">{{ blog.title }}</a><span class="crumbs__sep">/</span><span>{{ article.title }}</span>
+  {%- elsif template contains 'blog' -%}
+    <span class="crumbs__sep">/</span><span>{{ blog.title }}</span>
+  {%- elsif template contains 'page' -%}
+    <span class="crumbs__sep">/</span><span>{{ page.title }}</span>
+  {%- elsif template contains 'search' -%}
+    <span class="crumbs__sep">/</span><span>Поиск</span>
+  {%- elsif template contains 'cart' -%}
+    <span class="crumbs__sep">/</span><span>Корзина</span>
+  {%- endif -%}
+</nav>

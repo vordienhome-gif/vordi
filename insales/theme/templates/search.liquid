@@ -1,0 +1,20 @@
+{%- include 'vo-access' -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap section">
+  <h1 class="page-title">Поиск{% if search.query != blank %}: «{{ search.query | escape }}»{% endif %}</h1>
+  <form class="search search--page" action="{{ search_url | default: '/search' }}" method="get" role="search">
+    <input class="search__input" type="search" name="q" value="{{ search.query | escape }}" placeholder="Искать товары" aria-label="Поиск">
+    <button class="btn btn--primary" type="submit">Найти</button>
+  </form>
+  {% include 'gate-banner' %}
+  {%- if search.performed? -%}
+    {%- paginate search.results by 50 -%}
+      {%- if search.results.size > 0 -%}
+        <div class="pgrid pgrid--catalog">{%- for card_product in search.results -%}{% include 'product-card' %}{%- endfor -%}</div>
+        {% include 'pagination' %}
+      {%- else -%}
+        <div class="empty">Ничего не найдено. Попробуйте артикул или другое слово, или <a href="/page/kontakty#form">спросите менеджера</a>.</div>
+      {%- endif -%}
+    {%- endpaginate -%}
+  {%- endif -%}
+</div>

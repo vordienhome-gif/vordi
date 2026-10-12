@@ -1,0 +1,81 @@
+{%- assign tg = settings.telegram | remove: '@' | strip -%}
+{%- assign phone_link = settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+<a class="skip" href="#main">Перейти к содержанию</a>
+<div class="topbar">
+  <div class="wrap topbar__in">
+    <span class="topbar__item topbar__item--hide-sm">{% include 'icon', icon_name: 'check' %}Оптовые поставки для юрлиц и ИП</span>
+    <span class="topbar__item topbar__item--hide-md">{% include 'icon', icon_name: 'truck' %}Бесплатная доставка по Москве и МО</span>
+    <span class="topbar__spacer"></span>
+    <a class="topbar__link topbar__item--hide-md" href="/page/usloviya">Условия</a>
+    <a class="topbar__link topbar__item--hide-md" href="/page/dostavka">Доставка</a>
+    <a class="topbar__link topbar__item--hide-md" href="/page/oplata">Оплата</a>
+    <a class="topbar__link topbar__item--hide-sm" href="/page/kontakty">Контакты</a>
+    {% include 'messengers', mx_style: 'list', mx_class: 'topbar__link topbar__item--hide-sm' %}
+    {%- if tg != blank -%}<a class="topbar__link topbar__item--hide-sm" href="https://t.me/{{ tg }}" target="_blank" rel="noopener">{% include 'icon', icon_name: 'telegram' %}Telegram</a>{%- endif -%}
+    {%- if settings.phone != blank -%}<a class="topbar__link topbar__phone" href="tel:{{ phone_link }}">{% include 'icon', icon_name: 'phone' %}{{ settings.phone }}</a>{%- endif -%}
+  </div>
+</div>
+<header class="header">
+  <div class="wrap header__in">
+    <button type="button" class="header__burger" data-vo-menu-open aria-label="Меню" aria-controls="vo-drawer" aria-expanded="false">{% include 'icon', icon_name: 'menu' %}</button>
+    {% include 'logo' %}
+    <div class="hcat">
+      <a class="btn btn--primary hcat__btn" href="/collection/all" aria-haspopup="true">{% include 'icon', icon_name: 'menu' %}<span>Каталог</span></a>
+      {%- if collections.all.subcollections.size > 0 -%}
+      <div class="mega">
+        <div class="mega__grid">
+        {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
+          <div class="mega__col">
+            <a class="mega__title" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>
+            {%- for c2 in c1.subcollections limit: 8 -%}<a class="mega__link" href="{{ c2.url }}">{{ c2.title }}</a>{%- endfor -%}
+          </div>
+        {%- endfor -%}
+        </div>
+      </div>
+      {%- endif -%}
+    </div>
+    <form class="search" action="{{ search_url | default: '/search' }}" method="get" role="search">
+      <input class="search__input" type="search" name="q" value="{{ search.query | escape }}" placeholder="Поиск по названию или артикулу" aria-label="Поиск по каталогу">
+      <button class="search__btn" type="submit" aria-label="Найти">{% include 'icon', icon_name: 'search' %}</button>
+    </form>
+    <div class="header__actions">
+      <a class="hact hact--price" href="/page/prays-list">{% include 'icon', icon_name: 'download' %}<span class="hact__text"><b>Прайс-лист</b><small>Запросить</small></span></a>
+      <a class="hact hact--user" href="{% if client %}/client_account/orders{% else %}/client_account/login{% endif %}">{% include 'icon', icon_name: 'user' %}<span class="hact__text"><b>{% if client %}Кабинет{% else %}Войти{% endif %}</b><small>{% if client %}{{ client.name | default: 'Мои заказы' }}{% else %}Оптовый клиент{% endif %}</small></span></a>
+      {%- if vo_show -%}
+      <a class="hact hact--cart" href="{{ cart_url | default: '/cart_items' }}">{% include 'icon', icon_name: 'cart' %}<span class="hact__text"><b>Корзина</b><small data-vo-cart-total>{{ cart.items_price | money }}</small></span></a>
+      {%- elsif client == nil -%}
+      <a class="btn btn--primary hact__join" href="/page/stat-partnerom">Стать клиентом</a>
+      {%- endif -%}
+    </div>
+  </div>
+  <nav class="cats-nav" aria-label="Разделы каталога">
+    <div class="wrap cats-nav__in">
+      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}<a class="cats-nav__link{% if collection.id == c1.id %} is-active{% endif %}" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
+      <a class="cats-nav__link" href="/collection/new">Новинки</a><a class="cats-nav__link" href="/collection/hits">Хиты продаж</a>
+      {%- if vo_show == false -%}<a class="cats-nav__link cats-nav__link--accent" href="/page/stat-partnerom">Как получить оптовые цены</a>{%- endif -%}
+    </div>
+  </nav>
+</header>
+
+{%- assign nav_items = 'Условия сотрудничества|/page/usloviya,Доставка|/page/dostavka,Оплата|/page/oplata,Дропшиппинг и маркетплейсы|/page/dropshipping,О компании|/page/o-kompanii,Блог|/blogs/blog,Контакты|/page/kontakty' | split: ',' -%}
+<div class="drawer" id="vo-drawer" hidden>
+  <div class="drawer__panel" role="dialog" aria-modal="true" aria-label="Меню">
+    <div class="drawer__head">{% include 'logo' %}<button type="button" class="drawer__close" data-vo-menu-close aria-label="Закрыть">{% include 'icon', icon_name: 'close' %}</button></div>
+    <div class="drawer__body">
+      <a class="drawer__link drawer__link--strong" href="/collection/all">Весь каталог</a>
+      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
+        <details class="drawer__group">
+          <summary>{{ c1.title | downcase | capitalize }}</summary>
+          <a class="drawer__link" href="{{ c1.url }}">Все товары раздела</a>
+          {%- for c2 in c1.subcollections -%}<a class="drawer__link" href="{{ c2.url }}">{{ c2.title }}</a>{%- endfor -%}
+        </details>
+      {%- endfor -%}
+      <hr>
+      <a class="drawer__link drawer__link--strong" href="/page/stat-partnerom">Стать оптовым клиентом</a>
+      <a class="drawer__link" href="{% if client %}/client_account/orders{% else %}/client_account/login{% endif %}">{% if client %}Личный кабинет{% else %}Войти{% endif %}</a>
+      <a class="drawer__link" href="/page/prays-list">Запросить прайс-лист</a>
+      {%- for it in nav_items -%}{%- assign p2 = it | split: '|' -%}<a class="drawer__link" href="{{ p2[1] }}">{{ p2[0] }}</a>{%- endfor -%}
+      {%- if settings.phone != blank -%}<a class="drawer__link drawer__link--strong" href="tel:{{ phone_link }}">{{ settings.phone }}</a>{%- endif -%}
+    </div>
+  </div>
+</div>
