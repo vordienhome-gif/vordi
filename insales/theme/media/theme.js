@@ -179,7 +179,7 @@
       var key = "vo-hide-na";
       try { cb.checked = win.localStorage.getItem(key) === "1"; } catch (e) {}
       function apply() {
-        $(".ptable__row.is-unavailable, .pcard.is-unavailable").forEach(function (r) { r.hidden = cb.checked; });
+        $$(".ptable__row.is-unavailable, .pcard.is-unavailable").forEach(function (r) { r.hidden = cb.checked; });
         try { win.localStorage.setItem(key, cb.checked ? "1" : "0"); } catch (e) {}
       }
       cb.addEventListener("change", apply); apply();
@@ -189,7 +189,7 @@
     (function () {
       var cur = "grid";
       try { cur = win.localStorage.getItem("vo-view") === "table" ? "table" : "grid"; } catch (e) {}
-      $("[data-vo-view]").forEach(function (b) {
+      $$("[data-vo-view]").forEach(function (b) {
         b.classList.toggle("is-active", b.getAttribute("data-vo-view") === cur);
         b.setAttribute("aria-pressed", String(b.getAttribute("data-vo-view") === cur));
         b.addEventListener("click", function () {

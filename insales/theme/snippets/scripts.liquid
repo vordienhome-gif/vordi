@@ -7,6 +7,8 @@
     template: "{{ template }}"
   };
 </script>
+{%- comment -%}theme.js (CDN) в двух местах вызывает $(…) вместо $$(…) — без этой заглушки скрипт падал на каждой странице (не работали поля заявки «Компания/ИНН», минимальная сумма, вид каталога). В репозитории theme.js уже исправлен; заглушку можно убрать после его загрузки в тему.{%- endcomment -%}
+<script>if(typeof window.$==='undefined'){window.$=function(s,c){return Array.prototype.slice.call((c||document).querySelectorAll(s));};}</script>
 <script src="{{ 'theme.js' | asset_url }}" defer></script>
 <script>
 (function(){

@@ -23,7 +23,7 @@
       {%- if collections.all.subcollections.size > 0 -%}
       <div class="mega">
         <div class="mega__grid">
-        {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}
+        {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
           <div class="mega__col">
             <a class="mega__title" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>
             {%- for c2 in c1.subcollections limit: 8 -%}<a class="mega__link" href="{{ c2.url }}">{{ c2.title }}</a>{%- endfor -%}
@@ -49,7 +49,7 @@
   </div>
   <nav class="cats-nav" aria-label="Разделы каталога">
     <div class="wrap cats-nav__in">
-      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}<a class="cats-nav__link{% if collection.id == c1.id %} is-active{% endif %}" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
+      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}<a class="cats-nav__link{% if collection.id == c1.id %} is-active{% endif %}" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
       <a class="cats-nav__link" href="/collection/new">Новинки</a><a class="cats-nav__link" href="/collection/hits">Хиты продаж</a>
       {%- if vo_show == false -%}<a class="cats-nav__link cats-nav__link--accent" href="/page/stat-partnerom">Как получить оптовые цены</a>{%- endif -%}
     </div>
@@ -62,7 +62,7 @@
     <div class="drawer__head">{% include 'logo' %}<button type="button" class="drawer__close" data-vo-menu-close aria-label="Закрыть">{% include 'icon', icon_name: 'close' %}</button></div>
     <div class="drawer__body">
       <a class="drawer__link drawer__link--strong" href="/collection/all">Весь каталог</a>
-      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}
+      {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
         <details class="drawer__group">
           <summary>{{ c1.title | downcase | capitalize }}</summary>
           <a class="drawer__link" href="{{ c1.url }}">Все товары раздела</a>

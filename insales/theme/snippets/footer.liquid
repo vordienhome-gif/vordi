@@ -12,7 +12,7 @@
     </div>
     <div class="footer__col">
       <div class="footer__title">Каталог</div>
-      {%- for c1 in collections.all.subcollections limit: 8 -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}<a class="footer__link" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
+      {%- for c1 in collections.all.subcollections limit: 8 -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}<a class="footer__link" href="{{ c1.url }}">{{ c1.title | downcase | capitalize }}</a>{%- endfor -%}
     </div>
     <div class="footer__col">
       <div class="footer__title">Покупателям</div>

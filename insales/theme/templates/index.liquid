@@ -7,7 +7,7 @@
 
 {%- comment -%}Фото для первого экрана: обложки первых разделов (или фото их товаров){%- endcomment -%}
 {%- assign hero_imgs = '' -%}
-{%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}
+{%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
   {%- assign c1_img = nil -%}
   {%- if c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign c1_img = c1.image | image_url: 640, format: 'webp' -%}{%- endunless -%}{%- endif -%}
   {%- if c1_img == nil -%}{%- for p in c1.products limit: 4 -%}{%- if c1_img == nil and p.images.size > 0 -%}{%- assign c1_img = p.first_image | image_url: 640, format: 'webp' -%}{%- endif -%}{%- endfor -%}{%- endif -%}
@@ -68,7 +68,7 @@
     <a class="link-arrow" href="/collection/all">Весь каталог →</a>
   </div>
   <div class="cats2">
-    {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' -%}{%- continue -%}{%- endif -%}
+    {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
       {%- assign c1_img = nil -%}
       {%- if c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign c1_img = c1.image | image_url: 480, format: 'webp' -%}{%- endunless -%}{%- endif -%}
       {%- if c1_img == nil -%}{%- for p in c1.products limit: 4 -%}{%- if c1_img == nil and p.images.size > 0 -%}{%- assign c1_img = p.first_image | image_url: 480, format: 'webp' -%}{%- endif -%}{%- endfor -%}{%- endif -%}
