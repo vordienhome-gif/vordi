@@ -33,4 +33,22 @@
   (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for(var j=0;j<document.scripts.length;j++){if(document.scripts[j].src===r){return;}}k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window,document,"script","https://mc.yandex.ru/metrika/tag.js","ym");
   ym({{ settings.yandex_metrika_id | strip }}, "init", {clickmap:true, trackLinks:true, accurateTrackBounce:true, webvisor:true, ecommerce:"dataLayer"});
 </script>
+<script>
+  /* Цели Метрики: мессенджеры (data-vo-goal), звонки, заявки */
+  (function(){
+    var id={{ settings.yandex_metrika_id | strip | plus: 0 }};
+    function goal(g){ try{ if(window.ym&&id) window.ym(id,'reachGoal',g); }catch(e){} }
+    document.addEventListener('click',function(e){
+      var a=e.target.closest?e.target.closest('a'):null; if(!a) return;
+      var g=a.getAttribute('data-vo-goal');
+      if(g) goal(g);
+      else if((a.getAttribute('href')||'').indexOf('tel:')===0) goal('phone');
+      else if((a.getAttribute('href')||'').indexOf('t.me/')>-1) goal('telegram');
+      else if((a.getAttribute('href')||'').indexOf('wa.me/')>-1) goal('whatsapp');
+    },true);
+    document.addEventListener('submit',function(e){
+      var f=e.target; if(f&&f.getAttribute&&f.getAttribute('data-vo-lead')) goal('lead_'+f.getAttribute('data-vo-lead'));
+    },true);
+  })();
+</script>
 {%- endif -%}

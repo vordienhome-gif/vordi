@@ -18,7 +18,7 @@
       <div class="footer__title">Покупателям</div>
       {%- assign f_links = linklists.footer-menu.links -%}
       {%- if f_links.size > 0 -%}
-        {%- for link in f_links -%}<a class="footer__link" href="{{ link.url }}">{{ link.title }}</a>{%- endfor -%}
+        {%- for link in f_links -%}{%- assign fl_title = link.title -%}{%- if link.url contains '/page/oferta' -%}{%- assign fl_title = 'Типовой договор поставки' -%}{%- endif -%}<a class="footer__link" href="{{ link.url }}">{{ fl_title }}</a>{%- endfor -%}
       {%- else -%}
         <a class="footer__link" href="/page/usloviya">Условия сотрудничества</a>
         <a class="footer__link" href="/page/dostavka">Доставка</a>
