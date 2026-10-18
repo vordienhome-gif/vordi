@@ -1,0 +1,30 @@
+{%- comment -%}
+  Мессенджеры оптового отдела: WhatsApp, MAX, Telegram.
+  MAX: ссылка на профиль/канал вида https://max.ru/u/… — берётся из настройки темы max_url,
+  а если она не заполнена — из MX_MAX_URL ниже. Пока ссылки нет, кнопка MAX не выводится.
+  Параметр mx_style: float (плавающие кнопки) | list (ссылки столбиком) | row (кнопки в строку)
+{%- endcomment -%}
+{%- assign MX_MAX_URL = '' -%}
+{%- assign mx_wa = settings.whatsapp | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+{%- if mx_wa == blank -%}{%- assign mx_wa = settings.phone | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}{%- endif -%}
+{%- assign mx_tg = settings.telegram | remove: '@' | strip -%}
+{%- assign mx_max = settings.max_url | default: MX_MAX_URL | strip -%}
+{%- assign mx_wa_text = 'Здравствуйте! Интересуют оптовые поставки Elitmosteks.' | url_encode -%}
+{%- case mx_style -%}
+{%- when 'float' -%}
+<div class="mxf" aria-label="Написать в мессенджер">
+  {%- if mx_wa != blank -%}<a class="mxf__btn mxf__btn--wa" href="https://wa.me/{{ mx_wa }}?text={{ mx_wa_text }}" target="_blank" rel="noopener" aria-label="Написать в WhatsApp" data-vo-goal="whatsapp">{% include 'icon', icon_name: 'whatsapp' %}</a>{%- endif -%}
+  {%- if mx_max != blank -%}<a class="mxf__btn mxf__btn--max" href="{{ mx_max }}" target="_blank" rel="noopener" aria-label="Написать в MAX" data-vo-goal="max"><span class="mxf__max">MAX</span></a>{%- endif -%}
+</div>
+{%- when 'mgr' -%}
+  {%- if mx_max != blank -%}<a class="mgr__item" href="{{ mx_max }}" target="_blank" rel="noopener" data-vo-goal="max">{% include 'icon', icon_name: 'chat' %} Написать в MAX</a>{%- endif -%}
+{%- when 'row' -%}
+<div class="mxr">
+  {%- if mx_wa != blank -%}<a class="mxr__btn mxr__btn--wa" href="https://wa.me/{{ mx_wa }}?text={{ mx_wa_text }}" target="_blank" rel="noopener" data-vo-goal="whatsapp">{% include 'icon', icon_name: 'whatsapp' %}WhatsApp</a>{%- endif -%}
+  {%- if mx_max != blank -%}<a class="mxr__btn mxr__btn--max" href="{{ mx_max }}" target="_blank" rel="noopener" data-vo-goal="max"><span class="mxr__max">M</span>MAX</a>{%- endif -%}
+  {%- if mx_tg != blank -%}<a class="mxr__btn mxr__btn--tg" href="https://t.me/{{ mx_tg }}" target="_blank" rel="noopener" data-vo-goal="telegram">{% include 'icon', icon_name: 'telegram' %}Telegram</a>{%- endif -%}
+</div>
+{%- else -%}
+  {%- if mx_wa != blank -%}<a class="{{ mx_class | default: 'footer__link' }}" href="https://wa.me/{{ mx_wa }}?text={{ mx_wa_text }}" target="_blank" rel="noopener" data-vo-goal="whatsapp">WhatsApp</a>{%- endif -%}
+  {%- if mx_max != blank -%}<a class="{{ mx_class | default: 'footer__link' }}" href="{{ mx_max }}" target="_blank" rel="noopener" data-vo-goal="max">MAX</a>{%- endif -%}
+{%- endcase -%}

@@ -1,0 +1,15 @@
+{%- comment -%}Альтернативный шаблон (необязательно): анкета оптового клиента. page.liquid подключает её автоматически для адреса /page/stat-partnerom{%- endcomment -%}
+{%- include 'vo-access' -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap page page--form">
+  <article class="page__body">
+    <h1 class="page-title">{{ page.title }}</h1>
+    {%- if page.content != blank -%}<div class="rte">{{ page.content }}</div>{%- endif -%}
+    {%- if vo_state == 'approved' -%}
+      <div class="notice notice--ok">Ваша компания уже подтверждена — оптовые цены открыты. <a href="/collection/all">Перейти в каталог</a></div>
+    {%- else -%}
+      {% include 'lead-form', form_kind: 'apply' %}
+    {%- endif -%}
+  </article>
+  <aside class="page__side">{% include 'steps-side' %}{% include 'side-info' %}</aside>
+</div>

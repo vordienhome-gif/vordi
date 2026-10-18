@@ -1,0 +1,39 @@
+{%- include 'vo-access' -%}
+<!DOCTYPE html>
+<html class="{{ default_checkout2_layout_class }}" lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% yield 'title' %} — {{ settings.brand_name | default: account.title }}</title>
+  <link rel="icon" href="{{ 'favicon.png' | asset_url }}" type="image/png">
+  {{ 'checkout2' | global_stylesheet_tag }}
+  <link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
+  <link rel="stylesheet" href="{{ 'custom_checkout2.css' | asset_url }}">
+  {%- capture meta_settings_value -%}{"feedback_captcha_enabled": false }{%- endcapture -%}
+  <meta data-config="{{ meta_settings_value | escape }}" name="theme-settings" content="">
+</head>
+<body class="tpl-checkout vo-{{ vo_state }}" data-vo-state="{{ vo_state }}">
+  <header class="header header--slim">
+    <div class="wrap header__in">
+      {% include 'logo' %}
+      <span class="header__secure">Оформление оптового заказа · менеджер подтвердит наличие и сроки перед оплатой</span>
+      <a class="hbtn" href="{{ cart_url | default: '/cart_items' }}">← Вернуться в корзину</a>
+    </div>
+  </header>
+  <main id="main" class="main">
+    <div class="co-section--checkout_content wrap">
+      <div class="co-section--checkout_order co-section--checkout_order_sided">
+        <div class="co-section--checkout_header co-checkout-block--padded">
+          <h1 class="co-checkout-title co-title co-title--h1 page-title">{% yield 'title' %}</h1>
+        </div>
+        {% yield 'sidebar' %}
+        {% yield %}
+      </div>
+    </div>
+  </main>
+  {% include 'footer' %}
+  {% include_insales_scripts "common-js@v2" %}
+  {% include 'scripts' %}
+</body>
+</html>

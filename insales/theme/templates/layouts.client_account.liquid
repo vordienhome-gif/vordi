@@ -1,0 +1,50 @@
+{%- include 'vo-access' -%}
+<!DOCTYPE html>
+<html class="{{ default_checkout2_layout_class }} insales-checkout2" lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% yield 'title' %} — {{ settings.brand_name | default: account.title }}</title>
+  <link rel="icon" href="{{ 'favicon.png' | asset_url }}" type="image/png">
+  {{ 'checkout2' | global_stylesheet_tag }}
+  <link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
+  <link rel="stylesheet" href="{{ 'custom_checkout2.css' | asset_url }}">
+</head>
+<body class="tpl-account vo-{{ vo_state }}" data-vo-state="{{ vo_state }}">
+  {% include 'header' %}
+  <main id="main" class="main">
+    <div class="wrap account">
+      {%- if client -%}
+      <aside class="account__menu">
+        {% yield 'menu' %}
+        <nav class="account__links" aria-label="Кабинет">
+          <a href="/client_account/orders">История заказов</a>
+          <a href="/page/prays-list">Запросить прайс-лист</a>
+          <a href="/page/kontakty#form">Написать менеджеру</a>
+          <a href="/client_account/exit">Выйти</a>
+        </nav>
+      </aside>
+      {%- endif -%}
+      <section class="account__body">
+        <h1 class="page-title">{% yield 'title' %}</h1>
+        {%- if client and vo_state == 'pending' -%}
+        <div class="notice notice--info">
+          <b>Заявка на рассмотрении.</b> Менеджер проверит данные компании и откроет оптовые цены — обычно в течение одного рабочего дня. Чтобы ускорить проверку, <a href="/page/stat-partnerom">заполните анкету компании</a>.
+        </div>
+        {%- endif -%}
+        {%- unless client -%}
+        <div class="notice notice--info">
+          Оптовые цены открываются после проверки компании менеджером. Ещё не работаете с нами? <a href="/page/stat-partnerom">Отправьте заявку</a> — пришлём приглашение и условия.
+        </div>
+        {%- endunless -%}
+        {% yield %}
+      </section>
+    </div>
+  </main>
+  {% include 'footer' %}
+  {% include 'manager' %}
+  {% include_insales_scripts "common-js@v2" %}
+  {% include 'scripts' %}
+</body>
+</html>

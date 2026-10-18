@@ -1,0 +1,20 @@
+{%- comment -%}Обёртка оптовой таблицы. Параметр: table_products{%- endcomment -%}
+<div class="ptable-wrap">
+  <table class="ptable" data-vo-table>
+    <thead>
+      <tr>
+        <th scope="col">Товар</th>
+        <th scope="col">Артикул</th>
+        <th scope="col">Остаток</th>
+        <th scope="col" class="ta-r">Цена</th>
+        <th scope="col" class="ta-c">{% if vo_show %}Количество{% endif %}</th>
+        {%- if vo_show -%}<th scope="col" class="ta-r">Сумма</th>{%- endif -%}
+      </tr>
+    </thead>
+    <tbody>
+      {%- for row_product in table_products -%}
+        {% include 'product-row' %}
+      {%- endfor -%}
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,16 @@
+<div class="side side--info">
+  <div class="side__title">Оптовый отдел</div>
+  {%- if settings.manager_name != blank -%}<p>Менеджер: <b>{{ settings.manager_name }}</b></p>{%- endif -%}
+  {%- if settings.manager_phone != blank or settings.phone != blank -%}
+    {%- assign sp = settings.manager_phone | default: settings.phone -%}
+    <p><a href="tel:{{ sp | remove: ' ' | remove: '-' | remove: '(' | remove: ')' }}">{{ sp }}</a></p>
+  {%- endif -%}
+  {%- if settings.email != blank -%}<p><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></p>{%- endif -%}
+  {%- if settings.work_hours != blank -%}<p class="muted">{{ settings.work_hours }}</p>{%- endif -%}
+  <ul class="side__list">
+    <li><a href="/page/usloviya">Условия сотрудничества</a></li>
+    <li><a href="/page/dostavka">Доставка</a></li>
+    <li><a href="/page/oplata">Оплата</a></li>
+    <li><a href="/page/rekvizity">Реквизиты</a></li>
+  </ul>
+</div>

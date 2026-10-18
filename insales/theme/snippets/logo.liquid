@@ -1,0 +1,9 @@
+{%- assign logo_path = 'logotype.png' | asset_url_if_exists -%}
+<a class="logo" href="/" aria-label="{{ settings.brand_name | default: account.title | escape }} — на главную">
+  {%- if logo_path != blank -%}
+    <img class="logo__img" src="{{ logo_path }}" alt="{{ settings.brand_name | default: account.title | escape }}" height="40">
+  {%- else -%}
+    <span class="logo__name">{{ settings.brand_name | default: account.title }}</span>
+  {%- endif -%}
+  {%- if settings.brand_tagline != blank -%}<span class="logo__tag">{{ settings.brand_tagline }}</span>{%- endif -%}
+</a>

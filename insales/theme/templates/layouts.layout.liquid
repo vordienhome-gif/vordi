@@ -1,0 +1,20 @@
+{%- comment -%}Elitmosteks B2B — основной макет{%- endcomment -%}
+{%- include 'vo-access' -%}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  {% include 'head' %}
+</head>
+<body class="tpl-{{ template | replace: '.', '-' }} vo-{{ vo_state }}" data-vo-state="{{ vo_state }}">
+  {% include 'header' %}
+  <main id="main" class="main">
+    {{ content_for_layout }}
+  </main>
+  {% include 'footer' %}
+  {% include 'messengers', mx_style: 'float' %}
+  {% include 'manager' %}
+  {% include 'cookie' %}
+  {% include_insales_scripts "common-js@v2" %}
+  {% include 'scripts' %}
+</body>
+</html>

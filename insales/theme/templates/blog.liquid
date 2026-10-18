@@ -1,0 +1,12 @@
+{%- include 'vo-access' -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap section">
+  <h1 class="page-title">{{ blog.title }}</h1>
+  <p class="lead-text">Статьи о турецком текстиле: материалы, плотность, уход и выбор ассортимента для магазина и маркетплейса.</p>
+  {%- paginate articles by 12 -%}
+  <div class="posts">
+    {%- for article in articles -%}{% include 'article-card' %}{%- endfor -%}
+  </div>
+  {% include 'pagination' %}
+  {%- endpaginate -%}
+</div>

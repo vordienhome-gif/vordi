@@ -1,0 +1,6 @@
+{%- comment -%}Текст вместо цены для гостей и неподтверждённых клиентов{%- endcomment -%}
+{%- if vo_state == 'pending' -%}
+<span class="vo-note vo-note--pending">Цена после подтверждения</span>
+{%- else -%}
+<a class="vo-note" href="/page/stat-partnerom">Цена — после подтверждения компании</a>
+{%- endif -%}

@@ -1,0 +1,33 @@
+{%- comment -%}
+  Доступ к оптовым ценам. Задаёт:
+    vo_state  — guest | pending | approved
+    vo_min    — минимальная сумма заказа для группы клиента (₽, число)
+    vo_group  — название группы клиента
+  vo_show   — показывать цены и покупку. Только подтверждённым клиентам: гости цены не видят (оптовый портал). Внимание: JSON-адреса InSales
+  (/products_by_id, /collection/*.json) отдают базовую цену товара — базовой должна быть розничная цена,
+  оптовые уровни — только в типах цен по группам клиентов.
+{%- endcomment -%}
+{%- assign vo_state = 'guest' -%}
+{%- assign vo_group = '' -%}
+{%- assign vo_min = settings.min_order | default: '50000' | plus: 0 -%}
+{%- if client -%}
+  {%- assign vo_state = 'pending' -%}
+  {%- if client_group -%}
+    {%- assign vo_group = client_group.title | strip -%}
+    {%- assign vo_list = settings.approved_groups | split: '|' -%}
+    {%- for vo_g in vo_list -%}
+      {%- assign vo_g2 = vo_g | strip -%}
+      {%- if vo_g2 != '' and vo_g2 == vo_group -%}{%- assign vo_state = 'approved' -%}{%- endif -%}
+    {%- endfor -%}
+    {%- assign vo_list = settings.nomin_groups | split: '|' -%}
+    {%- for vo_g in vo_list -%}
+      {%- assign vo_g2 = vo_g | strip -%}
+      {%- if vo_g2 != '' and vo_g2 == vo_group -%}{%- assign vo_min = 0 -%}{%- endif -%}
+    {%- endfor -%}
+  {%- endif -%}
+{%- endif -%}
+{%- comment -%}Решение 12.10.2026: группа «Дропшиппинг» — без минимальной суммы заказа, остальные группы — от 50 000 ₽.{%- endcomment -%}
+{%- assign vo_g_dc = vo_group | downcase -%}
+{%- if vo_g_dc contains 'дропшиппинг' -%}{%- assign vo_min = 0 -%}{%- elsif vo_min < 50000 -%}{%- assign vo_min = 50000 -%}{%- endif -%}
+{%- assign vo_show = false -%}
+{%- if vo_state == 'approved' -%}{%- assign vo_show = true -%}{%- endif -%}

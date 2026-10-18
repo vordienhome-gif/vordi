@@ -1,0 +1,6 @@
+{%- if settings.cookie_show == '1' or settings.cookie_show == 'on' or settings.cookie_show == true -%}
+<div class="cookie" data-vo-cookie hidden>
+  <p>Мы используем файлы cookie, чтобы сайт работал корректно. Продолжая пользоваться сайтом, вы соглашаетесь с <a href="/page/politika">политикой обработки персональных данных</a>.</p>
+  <button type="button" class="btn btn--primary btn--sm" data-vo-cookie-ok>Понятно</button>
+</div>
+{%- endif -%}

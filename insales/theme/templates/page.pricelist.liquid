@@ -1,0 +1,16 @@
+{%- include 'vo-access' -%}
+<div class="wrap">{% include 'breadcrumbs' %}</div>
+<div class="wrap page page--form">
+  <article class="page__body">
+    <h1 class="page-title">{{ page.title }}</h1>
+    {%- if page.content != blank -%}<div class="rte">{{ page.content }}</div>{%- endif -%}
+    {%- if vo_state == 'approved' -%}
+    <div class="notice notice--soft">
+      <p><b>Актуальный прайс с вашими ценами</b> — каталог на сайте всегда показывает ваши цены и остатки. Нужен файл? Отправьте запрос: менеджер пришлёт прайс-лист в Excel на e-mail.</p>
+      <a class="btn btn--ghost btn--sm" href="/collection/all">Открыть каталог с ценами</a>
+    </div>
+    {%- endif -%}
+    {% include 'lead-form', form_kind: 'pricelist' %}
+  </article>
+  <aside class="page__side">{% include 'side-info' %}</aside>
+</div>

@@ -1,0 +1,12 @@
+{%- assign tg = settings.telegram | remove: '@' | strip -%}
+{%- assign wa = settings.whatsapp | remove: '+' | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+{%- assign phone_link = settings.phone | remove: ' ' | remove: '-' | remove: '(' | remove: ')' -%}
+    {% include 'messengers', mx_style: 'row' %}
+    <div class="contacts">
+      {%- if settings.phone != blank -%}<div class="contact"><span class="contact__label">Телефон</span><a href="tel:{{ phone_link }}">{{ settings.phone }}</a></div>{%- endif -%}
+      {%- if settings.email != blank -%}<div class="contact"><span class="contact__label">E-mail</span><a href="mailto:{{ settings.email }}">{{ settings.email }}</a></div>{%- endif -%}
+      {%- if tg != blank -%}<div class="contact"><span class="contact__label">Telegram</span><a href="https://t.me/{{ tg }}" target="_blank" rel="noopener">@{{ tg }}</a></div>{%- endif -%}
+      {%- if wa != blank -%}<div class="contact"><span class="contact__label">WhatsApp</span><a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener">Написать</a></div>{%- endif -%}
+      {%- if settings.warehouse_address != blank -%}<div class="contact"><span class="contact__label">Склад и самовывоз</span><span>{{ settings.warehouse_address }}</span></div>{%- endif -%}
+      {%- if settings.work_hours != blank -%}<div class="contact"><span class="contact__label">Часы работы</span><span>{{ settings.work_hours }}</span></div>{%- endif -%}
+    </div>

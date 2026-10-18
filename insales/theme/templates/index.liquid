@@ -1,0 +1,163 @@
+{%- include 'vo-access' -%}
+{%- comment -%}
+  Главная B2B: первый экран с условиями, преимущества, разделы каталога, полки товаров,
+  кому подходит, как заказать, бренды, форма запроса прайс-листа и текст о компании.
+{%- endcomment -%}
+{%- assign total_products = collections.all.products_count -%}
+
+{%- comment -%}Фото для первого экрана: обложки первых разделов (или фото их товаров){%- endcomment -%}
+{%- assign hero_imgs = '' -%}
+{%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
+  {%- assign c1_img = nil -%}
+  {%- if c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign c1_img = c1.image | image_url: 640, format: 'webp' -%}{%- endunless -%}{%- endif -%}
+  {%- if c1_img == nil -%}{%- for p in c1.products limit: 4 -%}{%- if c1_img == nil and p.images.size > 0 -%}{%- assign c1_img = p.first_image | image_url: 640, format: 'webp' -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+  {%- if c1_img -%}{%- assign hero_imgs = hero_imgs | append: c1_img | append: '|' | append: c1.title | append: '||' -%}{%- endif -%}
+{%- endfor -%}
+{%- assign hero_list = hero_imgs | split: '||' -%}
+
+<section class="hero2">
+  <div class="wrap hero2__in">
+    <div class="hero2__text">
+      <p class="eyebrow">Оптовый поставщик · Москва · с доставкой по России и ЕАЭС</p>
+      <h1 class="hero2__title">{{ settings.hero_title | default: 'Турецкий домашний текстиль оптом' }}</h1>
+      <p class="hero2__lead">Постельное бельё, полотенца, пледы, халаты и текстиль для дома от фабрик Турции. Отгрузка со склада в Балашихе, полный пакет документов для бизнеса.{% if vo_show %} Ваши оптовые цены и остатки — в каталоге.{% else %} Оптовые цены открываются после подтверждения компании.{% endif %}</p>
+      <div class="hero2__cta">
+        {%- if vo_show -%}
+        <a class="btn btn--primary btn--lg" href="/collection/all">Перейти в каталог</a>
+        <a class="btn btn--ghost btn--lg" href="/page/prays-list">{% include 'icon', icon_name: 'download' %}Получить прайс-лист</a>
+        {%- elsif vo_state == 'pending' -%}
+        <a class="btn btn--primary btn--lg" href="/collection/all">Смотреть каталог</a>
+        <a class="btn btn--ghost btn--lg" href="/page/kontakty#form">Связаться с менеджером</a>
+        {%- else -%}
+        <a class="btn btn--primary btn--lg" href="/page/stat-partnerom">Стать оптовым клиентом</a>
+        <a class="btn btn--ghost btn--lg" href="/collection/all">Смотреть каталог</a>
+        {%- endif -%}
+      </div>
+      {%- if vo_state == 'pending' -%}<p class="hero2__note">Ваша заявка на рассмотрении — менеджер проверит данные компании и откроет цены.</p>{%- elsif vo_state == 'guest' -%}<p class="hero2__note">Уже работаете с нами? <a href="/client_account/login">Войдите</a>, чтобы увидеть свои цены.</p>{%- endif -%}
+      <ul class="hero2__facts">
+        <li><b>{% if total_products > 0 %}{{ total_products }}+{% else %}1000+{% endif %}</b><span>артикулов в наличии</span></li>
+        <li><b>{% if vo_min > 0 %}от {{ vo_min | money }}{% else %}без минимума{% endif %}</b><span>минимальный заказ, любые товары</span></li>
+        <li><b>0 ₽</b><span>доставка по Москве и МО</span></li>
+        <li><b>ЭДО</b><span>счёт, УПД, «Честный ЗНАК»</span></li>
+      </ul>
+    </div>
+    {%- if hero_list.size > 2 -%}
+    <div class="hero2__media" aria-hidden="true">
+      {%- for it in hero_list limit: 3 -%}
+        {%- assign hp = it | split: '|' -%}
+        <img class="hero2__img hero2__img--{{ forloop.index }}" src="{{ hp[0] }}" alt="" width="320" height="400" {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async">
+      {%- endfor -%}
+      <div class="hero2__badge"><b>Прямые поставки</b><span>от производителей Турции</span></div>
+    </div>
+    {%- endif -%}
+  </div>
+</section>
+
+<section class="trust">
+  <div class="wrap trust__grid">
+    <div class="trust__item">{% include 'icon', icon_name: 'box' %}<div><b>Склад в Московской области</b><span>Отгрузка после подтверждения заказа и оплаты</span></div></div>
+    <div class="trust__item">{% include 'icon', icon_name: 'tag' %}<div><b>Оптовые цены по уровням</b><span>Чем больше объём — тем ниже цена за единицу</span></div></div>
+    <div class="trust__item">{% include 'icon', icon_name: 'doc' %}<div><b>Работаем официально</b><span>Договор поставки, счёт, УПД, ЭДО, маркировка</span></div></div>
+    <div class="trust__item">{% include 'icon', icon_name: 'truck' %}<div><b>Доставка по всей России</b><span>СДЭК или транспортной компанией на ваш выбор</span></div></div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <div class="section__head">
+    <div><p class="eyebrow">Каталог</p><h2 class="section__title">Разделы ассортимента</h2></div>
+    <a class="link-arrow" href="/collection/all">Весь каталог →</a>
+  </div>
+  <div class="cats2">
+    {%- for c1 in collections.all.subcollections -%}{%- if c1.handle == 'new' or c1.handle == 'hits' or c1.products_count == 0 -%}{%- continue -%}{%- endif -%}
+      {%- assign c1_img = nil -%}
+      {%- if c1.image -%}{%- unless c1.image.large_url contains 'no_image' -%}{%- assign c1_img = c1.image | image_url: 480, format: 'webp' -%}{%- endunless -%}{%- endif -%}
+      {%- if c1_img == nil -%}{%- for p in c1.products limit: 4 -%}{%- if c1_img == nil and p.images.size > 0 -%}{%- assign c1_img = p.first_image | image_url: 480, format: 'webp' -%}{%- endif -%}{%- endfor -%}{%- endif -%}
+      <a class="cat2{% if forloop.first %} cat2--wide{% endif %}" href="{{ c1.url }}">
+        {%- if c1_img -%}<img class="cat2__img" src="{{ c1_img }}" alt="{{ c1.title | escape }}" loading="lazy" decoding="async" width="300" height="300">{%- else -%}<span class="cat2__img"></span>{%- endif -%}
+        <span class="cat2__body">
+          <span class="cat2__title">{{ c1.title | downcase | capitalize }}</span>
+          {%- if c1.products_count > 0 -%}<span class="cat2__count">{{ c1.products_count }} товаров</span>{%- endif -%}
+        </span>
+      </a>
+    {%- endfor -%}
+  </div>
+</section>
+
+{% include 'product-shelf', shelf_collection: collections.hits, shelf_title: 'Хиты продаж', shelf_limit: 10, shelf_eyebrow: 'Чаще всего заказывают' %}
+{% include 'product-shelf', shelf_collection: collections.new, shelf_title: 'Новинки', shelf_limit: 10, shelf_eyebrow: 'Новые поступления' %}
+
+<section class="wrap section">
+  <div class="section__head"><div><p class="eyebrow">Кому подходит</p><h2 class="section__title">Работаем с бизнесом любого масштаба</h2></div></div>
+  <div class="segments2">
+    <a class="segment2" href="/page/usloviya">
+      <span class="segment2__ico">{% include 'icon', icon_name: 'box' %}</span>
+      <b>Магазины и торговые сети</b>
+      <span>Регулярные поставки, закрепленный менеджер, оптовые цены по уровням закупки.</span>
+      <span class="segment2__more">Условия сотрудничества →</span>
+    </a>
+    <a class="segment2" href="/page/dropshipping">
+      <span class="segment2__ico">{% include 'icon', icon_name: 'repeat' %}</span>
+      <b>Селлеры Wildberries и Ozon</b>
+      <span>Фото и описания для карточек, маркировка «Честный ЗНАК», дропшиппинг без склада.</span>
+      <span class="segment2__more">Дропшиппинг и маркетплейсы →</span>
+    </a>
+    <a class="segment2" href="/page/kollektsii">
+      <span class="segment2__ico">{% include 'icon', icon_name: 'tag' %}</span>
+      <b>Гостиницы, HoReCa и дизайнеры</b>
+      <span>Комплектация объектов и индивидуальные коллекции под ваш проект.</span>
+      <span class="segment2__more">Индивидуальные коллекции →</span>
+    </a>
+  </div>
+</section>
+
+<section class="howto">
+  <div class="wrap">
+    <div class="section__head"><div><p class="eyebrow eyebrow--light">Как заказать</p><h2 class="section__title">Четыре шага до поставки</h2></div></div>
+    <ol class="howto__list">
+      <li><b>Заявка</b><span>Оставьте заявку с ИНН — менеджер подтвердит компанию и откроет оптовые цены в личном кабинете.</span></li>
+      <li><b>Заказ</b><span>Соберите корзину на сайте{% if vo_min > 0 %} от {{ vo_min | money }}{% endif %}, комбинируя любые товары и размеры.</span></li>
+      <li><b>Счёт и оплата</b><span>Менеджер подтвердит наличие и выставит счёт для оплаты по безналичному расчёту.</span></li>
+      <li><b>Отгрузка</b><span>Бесплатная доставка по Москве и МО, в регионы — транспортной компанией.</span></li>
+    </ol>
+    <div class="howto__cta">
+      {%- unless vo_show -%}<a class="btn btn--light btn--lg" href="/page/stat-partnerom">Стать оптовым клиентом</a>{%- endunless -%}
+      <a class="howto__link" href="/page/usloviya">Подробнее об условиях →</a>
+    </div>
+  </div>
+</section>
+
+{%- assign brand_list = 'Gelin Home,Prima Casa,Limasso,Karacan,Hazangülü,Velora Home,Pierre Cardin,La Romana,Pupilla,Türkiz Prima' | split: ',' -%}
+<section class="wrap section">
+  <div class="section__head"><div><p class="eyebrow">Бренды</p><h2 class="section__title">Фабрики и бренды в ассортименте</h2></div></div>
+  <div class="brands2">
+    {%- for b in brand_list -%}<a class="brand2" href="/search?q={{ b | url_encode }}">{{ b }}</a>{%- endfor -%}
+  </div>
+</section>
+
+<section class="wrap section">
+  <div class="cta2">
+    <div class="cta2__text">
+      <p class="eyebrow eyebrow--light">Прайс-лист</p>
+      <h2 class="cta2__title">Получите актуальный прайс-лист и оптовые условия</h2>
+      <p>Отправим прайс-лист и подберём уровень цен под ваш объём закупок. Менеджер свяжется с вами в рабочее время.</p>
+      <ul class="cta2__list">
+        <li>{% include 'icon', icon_name: 'check' %}Цены для магазинов, селлеров и HoReCa</li>
+        <li>{% include 'icon', icon_name: 'check' %}Фото товаров для ваших карточек</li>
+        <li>{% include 'icon', icon_name: 'check' %}Персональный менеджер</li>
+      </ul>
+      <p class="cta2__or">Или напишите нам напрямую:</p>
+      {% include 'messengers', mx_style: 'row' %}
+    </div>
+    <div class="cta2__form">
+      {% include 'lead-form', form_kind: 'pricelist' %}
+    </div>
+  </div>
+</section>
+
+<section class="wrap section">
+  <div class="about2">
+    <h2 class="section__title">{{ settings.brand_name | default: account.title }} — оптовый поставщик турецкого текстиля</h2>
+    <p>Мы поставляем домашний текстиль из Турции магазинам, продавцам маркетплейсов, гостиницам и дизайнерам интерьера по всей России и в страны ЕАЭС. В ассортименте — комплекты постельного белья, махровые полотенца и наборы, пледы и покрывала, халаты, коврики для ванной, скатерти и текстиль для кухни.</p>
+    <p>Цены и остатки на сайте регулярно обновляются из учётной системы. Товары, подлежащие обязательной маркировке, поставляются с кодами «Честный ЗНАК». Работаем по договору поставки, документы — через ЭДО.</p>
+  </div>
+</section>

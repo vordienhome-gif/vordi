@@ -1,0 +1,44 @@
+{%- comment -%}
+  Карточка товара в стиле маркетплейса: фото 3:4, крупная цена, название, наличие, кнопка «В корзину».
+  Цены и кнопка покупки — только подтверждённым клиентам (vo_show). Параметр: card_product. Один вариант — кнопка добавляет 1 шт. в корзину; несколько — ведёт на выбор размера/цвета.
+{%- endcomment -%}
+{%- assign cp = card_product -%}
+{%- assign cp_v = cp.variants.first -%}
+{%- assign cp_price = cp_v.price | plus: 0 -%}
+{%- assign cp_old = cp_v.old_price | plus: 0 -%}
+{%- assign cp_min = cp.price_min | plus: 0 -%}
+{%- assign cp_from = false -%}
+{%- if cp.variants.size > 1 and cp.price_varies? and cp_min > 0 -%}{%- assign cp_from = true -%}{%- endif -%}
+<article class="pcard{% unless cp.available %} is-unavailable{% endunless %}">
+  <a class="pcard__img" href="{{ cp.url }}" tabindex="-1" aria-hidden="true">
+    {%- if cp.images.size > 0 -%}
+      <img src="{{ cp.first_image | image_url: 480, format: 'webp' }}" srcset="{{ cp.first_image | image_url: 320, format: 'webp' }} 320w, {{ cp.first_image | image_url: 480, format: 'webp' }} 480w, {{ cp.first_image | image_url: 640, format: 'webp' }} 640w" sizes="(max-width: 700px) 48vw, (max-width: 1200px) 24vw, 230px" alt="{{ cp.title | escape }}" loading="lazy" decoding="async" width="300" height="400">
+    {%- else -%}
+      <span class="pcard__noimg">Фото скоро</span>
+    {%- endif -%}
+    {%- if cp.available == false -%}<span class="pcard__badge">Нет в наличии</span>{%- elsif vo_show and cp_old > cp_price and cp_price > 0 -%}{%- assign cp_pct = cp_old | minus: cp_price | times: 100 | divided_by: cp_old -%}<span class="pcard__badge pcard__badge--sale">−{{ cp_pct }}%</span>{%- endif -%}
+  </a>
+  <div class="pcard__body">
+    <div class="pcard__price">
+      {%- if vo_show == false -%}<a class="pcard__ask" href="/page/stat-partnerom">Цена после подтверждения</a>
+      {%- elsif cp_from -%}<b>от {{ cp.price_min | money }}</b>
+      {%- elsif cp_price > 0 -%}<b>{{ cp_v.price | money }}</b>{%- if cp_old > cp_price -%}<s>{{ cp_v.old_price | money }}</s>{%- endif -%}
+      {%- else -%}<span class="pcard__ask">Цена по запросу</span>{%- endif -%}
+    </div>
+    <a class="pcard__title" href="{{ cp.url }}">{{ cp.title }}</a>
+    {%- if cp.available -%}<span class="pcard__stock">В наличии</span>{%- endif -%}
+    <div class="pcard__buy">
+      {%- if vo_show == false -%}
+        <a class="btn btn--soft btn--sm btn--block" href="{{ cp.url }}">Подробнее</a>
+      {%- elsif cp.available == false -%}
+        <a class="btn btn--soft btn--sm btn--block" href="{{ cp.url }}">Подробнее</a>
+      {%- elsif cp.variants.size > 1 -%}
+        <a class="btn btn--primary btn--sm btn--block" href="{{ cp.url }}">Выбрать</a>
+      {%- elsif cp_price > 0 -%}
+        <button type="button" class="btn btn--primary btn--sm btn--block" data-vo-add="{{ cp_v.id }}">В корзину</button>
+      {%- else -%}
+        <a class="btn btn--soft btn--sm btn--block" href="{{ cp.url }}">Подробнее</a>
+      {%- endif -%}
+    </div>
+  </div>
+</article>

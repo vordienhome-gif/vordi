@@ -1,0 +1,62 @@
+/* Дополнения к theme.css */
+/* Яндекс Карта на странице контактов */
+
+.map { margin: 28px 0; }
+.map__frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; border: 1px solid var(--line, #E3DCCD); background: #EDE7DB; }
+.map__frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.map__links { margin-top: 8px; font-size: 14px; }
+@media (max-width: 700px) { .map__frame { aspect-ratio: 4 / 3; } }
+
+/* Карточки товаров на главной */
+.pgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1000px) { .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+.pcard { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; transition: box-shadow .15s; }
+.pcard:hover { box-shadow: 0 6px 20px rgba(28,34,48,.08); }
+.pcard.is-unavailable { opacity: .7; }
+.pcard__img { display: block; aspect-ratio: 1 / 1; background: var(--line-2); }
+.pcard__img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pcard__noimg { display: block; width: 100%; height: 100%; }
+.pcard__body { display: flex; flex-direction: column; gap: 4px; padding: 12px; flex: 1; }
+.pcard__title { color: var(--ink); font-weight: 500; font-size: 14px; line-height: 1.35; text-decoration: none; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pcard__title:hover { color: var(--blue); }
+.pcard__sku { font-size: 12px; color: var(--muted); }
+.pcard__stock { font-size: 12px; }
+.pcard__price { margin-top: auto; padding-top: 6px; font-weight: 700; font-size: 15px; }
+.pcard__price .vo-note, .pcard__price .muted { font-weight: 500; font-size: 13px; }
+@media (max-width: 700px) { .pcard__body { padding: 9px; } .pcard__title { font-size: 13px; } }
+
+/* Бренды */
+.brands { display: flex; flex-wrap: wrap; gap: 10px; }
+.brand-chip { padding: 10px 16px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+.brand-chip:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Каталог: плитка */
+.pgrid--catalog { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 8px; }
+@media (max-width: 1200px) { .pgrid--catalog { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .pgrid--catalog { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.pcard__img { position: relative; overflow: hidden; }
+.pcard__img img { transition: transform .35s ease; }
+.pcard:hover .pcard__img img { transform: scale(1.04); }
+.pcard__noimg { background: linear-gradient(135deg, #F3EEE4, #E8E0D1); }
+.pcard__buy { margin-top: 8px; }
+.pcard__buy .qty { width: 100%; justify-content: space-between; }
+.pcard__choose { width: 100%; text-align: center; }
+.viewsw { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.viewsw__btn { border: 0; background: transparent; padding: 7px 9px; cursor: pointer; fill: var(--muted); line-height: 0; }
+.viewsw__btn + .viewsw__btn { border-left: 1px solid var(--line); }
+.viewsw__btn.is-active { background: var(--blue); fill: #fff; }
+.viewsw__btn:not(.is-active):hover { fill: var(--blue); }
+
+/* Подразделы с фото */
+.subcats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 6px 0 18px; }
+.subcat { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; text-decoration: none; color: var(--ink); transition: box-shadow .15s, border-color .15s; }
+.subcat:hover { border-color: var(--blue); box-shadow: 0 6px 18px rgba(28,34,48,.08); }
+.subcat__img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: linear-gradient(135deg, #F3EEE4, #E8E0D1); }
+.subcat__title { padding: 10px 12px 0; font-weight: 600; font-size: 14px; line-height: 1.3; }
+.subcat__count { padding: 2px 12px 10px; font-size: 12px; color: var(--muted); }
+@media (max-width: 700px) { .subcats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+
+/* Блог: карточки с обложкой */
+.posts .post__img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 10px; background: #EDE7DB; }
+.post__img--empty { display: block; width: 100%; aspect-ratio: 16 / 10; border-radius: 10px; background: linear-gradient(135deg, #F3EEE4, #E8E0D1); }
