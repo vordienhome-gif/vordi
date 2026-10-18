@@ -19,3 +19,10 @@
     <span class="crumbs__sep">/</span><span>Корзина</span>
   {%- endif -%}
 </nav>
+{%- if template contains 'collection' or template contains 'product' -%}
+{%- assign bc_pos = 1 -%}
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Главная","item":"{{ account.url }}/"}
+{%- for c in current_collections -%}{%- unless c.handle == 'all' and forloop.length > 1 -%}{%- assign bc_pos = bc_pos | plus: 1 -%},{"@type":"ListItem","position":{{ bc_pos }},"name":{{ c.title | json }},"item":"{{ account.url }}{{ c.url }}"}{%- endunless -%}{%- endfor -%}
+{%- if template contains 'product' -%}{%- assign bc_pos = bc_pos | plus: 1 -%},{"@type":"ListItem","position":{{ bc_pos }},"name":{{ product.title | json }},"item":"{{ account.url }}{{ product.canonical_url }}"}{%- endif -%}
+]}</script>
+{%- endif -%}
