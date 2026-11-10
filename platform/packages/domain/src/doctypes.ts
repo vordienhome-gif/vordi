@@ -42,8 +42,9 @@ export const DOC_TYPES = {
   counterpartyadjustment: { section: 'money', ru: 'Корректировка взаиморасчётов', tr: 'Cari bakiye düzeltmesi', prefix: 'КВ', counterparty: true, settle: 1, signedSum: true },
 
   // — Bilgi belgeleri (defterlere yazmaz)
-  retailshift: { section: 'retail', ru: 'Смена', tr: 'Kasa vardiyası', prefix: 'СМ' },
-  commissionreportin: { section: 'sales', ru: 'Отчёт комиссионера', tr: 'Komisyoncu raporu', prefix: 'ОК', lines: true, counterparty: true },
+  retailshift: { section: 'retail', ru: 'Смена', tr: 'Kasa vardiyası', prefix: 'СМ' } as DocTypeDef,
+  /** Komisyoncu (ör. pazaryeri) satış raporu: komisyon düşülmüş tutar (commitentSum) cariye borç yazar. */
+  commissionreportin: { section: 'sales', ru: 'Отчёт комиссионера', tr: 'Komisyoncu raporu', prefix: 'ОК', lines: true, counterparty: true, settle: 1, settleFromSum: true },
 } as const satisfies Record<string, DocTypeDef>;
 
 export interface DocTypeDef {
@@ -66,6 +67,8 @@ export interface DocTypeDef {
   costSource?: boolean;
   /** Satırsız belgede tutar eksi olabilir (düzeltme belgeleri). */
   signedSum?: boolean;
+  /** Cari kaydı satır toplamından değil, belgedeki `sum` alanından yazılır. */
+  settleFromSum?: boolean;
 }
 
 export type DocType = keyof typeof DOC_TYPES;

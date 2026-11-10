@@ -33,7 +33,7 @@ function fakeMs(data: Record<string, unknown[]>, extra: Record<string, unknown> 
   return {
     async get<T>(path: string) {
       if (path in extra) return extra[path] as T;
-      if (path.endsWith('/metadata')) return { states: [{ id: 'st1', name: 'Новый' }] } as T;
+      if (path.endsWith('/metadata')) return { states: [{ id: 'st1', name: 'Новый', stateType: 'Regular' }, { id: 'st2', name: 'Доставлен', stateType: 'Successful' }] } as T;
       throw new Error(`unexpected GET ${path}`);
     },
     async *listAll<T>(path: string, query: Record<string, string | number> = {}) {
@@ -70,7 +70,6 @@ const data: Record<string, unknown[]> = {
   '/entity/counterparty': [supplier],
   '/entity/employee': [{ id: 'e1e1e1e1-0000', fullName: 'Иванов Иван' }],
   '/entity/product': [product, plain],
-  '/entity/service': [],
   '/entity/variant': [vWhite, vGrey],
   '/entity/retailstore': [{ id: 'r1', name: 'Касса 141', store: m('store', 's2'), organization: m('organization', 'o1') }],
   '/entity/supply': [doc('supply', 'sup1', { store: m('store', 's1'), agent: m('counterparty', 'c1'), organization: m('organization', 'o1'),
@@ -78,14 +77,21 @@ const data: Record<string, unknown[]> = {
   '/entity/move': [doc('move', 'mv1', { sourceStore: m('store', 's1'), targetStore: m('store', 's2'), positions: { meta: { size: 1 }, rows: [pos(m('variant', 'v1'), 4, 0)] } })],
   '/entity/retaildemand': [doc('retaildemand', 'rd1', { store: m('store', 's2'), agent: m('counterparty', 'c1'), cashSum: 0, noCashSum: 510000,
     retailStore: m('retailstore', 'r1'), positions: { meta: { size: 1 }, rows: [pos(m('variant', 'v1'), 1, 510000, { trackingCodes: [{ cis: '010869743684037321ABCDEFGHIJKLM' }] })] } })],
-  '/entity/customerorder': [doc('customerorder', 'co1', { store: m('store', 's1'), agent: m('counterparty', 'c1'), state: { meta: { href: `${B}/entity/customerorder/metadata/states/st1` } },
+  '/entity/customerorder': [doc('customerorder', 'co2', { store: m('store', 's1'), agent: m('counterparty', 'c1'), state: { meta: { href: `${B}/entity/customerorder/metadata/states/st2` } },
+    positions: { meta: { size: 1 }, rows: [pos(m('product', 'p2'), 7, 25000, { reserve: 7 })] } }), doc('customerorder', 'co1', { store: m('store', 's1'), agent: m('counterparty', 'c1'), state: { meta: { href: `${B}/entity/customerorder/metadata/states/st1` } },
     positions: { meta: { size: 1 }, rows: [pos(m('product', 'p2'), 3, 25000, { reserve: 2 })] } })],
+  '/entity/service': [{ ...m('service', 'sv1'), id: 'sv1', name: 'Доставка', salePrices: [], buyPrice: { value: 0, currency: RUB } }],
+  '/entity/demand': [doc('demand', 'dm1', { store: m('store', 's1'), agent: m('counterparty', 'c1'),
+    positions: { meta: { size: 2 }, rows: [pos(m('product', 'p2'), 1, 25000), pos(m('service', 'sv1'), 1, 30000)] } })],
+  '/entity/cashin': [doc('cashin', 'ci1', { agent: m('employee', 'e1e1e1e1-0000'), sum: 50000 })],
+  '/entity/commissionreportin': [doc('commissionreportin', 'cr1', { agent: m('counterparty', 'c1'), sum: 100000, commitentSum: 94000,
+    positions: { meta: { size: 1 }, rows: [pos(m('product', 'p2'), 1, 100000)] } })],
   '/entity/loss': [doc('loss', 'ls1', { store: m('store', 's1'), positions: { meta: { size: 0 }, rows: [] } })],
   '/entity/paymentout': [doc('paymentout', 'po1', { agent: m('counterparty', 'c1'), sum: 100000 })],
   // Mutabakat raporları
   '/report/stock/bystore': [
     { meta: { href: `${B}/entity/variant/v1` }, stockByStore: [{ meta: { href: `${B}/entity/store/s1` }, stock: 6, reserve: 0 }, { meta: { href: `${B}/entity/store/s2` }, stock: 3, reserve: 0 }] },
-    { meta: { href: `${B}/entity/product/p2` }, stockByStore: [{ meta: { href: `${B}/entity/store/s1` }, stock: 5, reserve: 2 }] },
+    { meta: { href: `${B}/entity/product/p2` }, stockByStore: [{ meta: { href: `${B}/entity/store/s1` }, stock: 4, reserve: 2 }] },
   ],
   '/report/counterparty': [{ counterparty: m('counterparty', 'c1'), balance: 3110000 }],
 };
@@ -107,7 +113,9 @@ describe('МойСклад aktarımı (sahte veriyle)', () => {
     // Seed "Основной склад" = 1; aktarılan depolar 2 ve 3
     expect(find('КПБ Majoli', 'Белый', 's1')).toMatchObject({ stock: 6 });
     expect(find('КПБ Majoli', 'Белый', 's2')).toMatchObject({ stock: 3 });
-    expect(find('Коврик', '', 's1')).toMatchObject({ stock: 5, reserve: 2 });
+    expect(find('Коврик', '', 's1')).toMatchObject({ stock: 4, reserve: 2 }); // kapanmış sipariş (Доставлен) rezerv tutmaz
+    expect(rows.find((r) => r.productName === 'Доставка')).toBeUndefined(); // hizmet stoğa girmez
+    expect(s.warnings['not_posted:missing_counterparty']).toBeUndefined(); // çalışandan kasa tahsilatı işlenir
 
     // İkinci çalıştırma: aynı sayılar, kopya yok
     await importMoySklad(db, fakeMs(data, extra), quiet);
@@ -116,8 +124,8 @@ describe('МойСклад aktarımı (sahte veriyle)', () => {
     const rec = await reconcileMoySklad(db, fakeMs(data, extra));
     expect(rec.stock.diffs).toEqual([]);
     expect(rec.reserve.diffs).toEqual([]);
-    // Tedarikçi: −3 050 000 (mal kabul) + 100 000 (ödeme) = −2 950 000; МойСклад raporunda sahte olarak farklı → fark listelenir
-    expect(rec.balances.diffs).toHaveLength(1);
+    // Cari: −3 050 000 (mal kabul) + 100 000 (ödeme) + 55 000 (sevkiyat) + 94 000 (komisyoncu raporu, komisyon düşülmüş) = −2 801 000
+    expect(rec.balances.diffs).toEqual([{ counterparty: 'ООО Текстиль', moysklad: 3110000 * (rec.balances.signFlipped ? -1 : 1), vordi: -2801000 }]);
     await close();
   });
 });

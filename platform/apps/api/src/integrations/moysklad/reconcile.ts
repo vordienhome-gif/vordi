@@ -12,7 +12,7 @@ export interface StockDiff { product: string; variant: string; warehouse: string
 export interface BalanceDiff { counterparty: string; moysklad: number; vordi: number }
 
 export interface ReconcileResult {
-  stock: { compared: number; matched: number; diffs: StockDiff[] };
+  stock: { compared: number; matched: number; diffs: StockDiff[]; archivedSkipped: number };
   reserve: { compared: number; matched: number; diffs: StockDiff[] };
   balances: { compared: number; matched: number; diffs: BalanceDiff[]; signFlipped: boolean };
 }
@@ -34,8 +34,14 @@ export async function reconcileMoySklad(db: Db, ms: MsClient): Promise<Reconcile
   const ourReserve = new Map<string, number>();
   for (const r of await stockReport(db, {})) if (r.reserve) ourReserve.set(`${r.variantId}:${r.warehouseId}`, r.reserve);
 
-  const names = new Map((await db.select({ id: variants.id, p: products.name, v: variants.name }).from(variants)
-    .innerJoin(products, eq(products.id, variants.productId))).map((r) => [r.id, r]));
+  const names = new Map((await db.select({ id: variants.id, p: products.name, v: variants.name, archived: sql<boolean>`${products.archived} or ${variants.archived}`, service: products.isService })
+    .from(variants).innerJoin(products, eq(products.id, variants.productId))).map((r) => [r.id, r]));
+  // МойСклад stok raporları arşivdeki ürünleri hiç göstermez; bunlar ayrı sayılır.
+  let archivedSkipped = 0;
+  for (const k of [...ourStock.keys()]) {
+    const n = names.get(Number(k.split(':')[0]));
+    if (n?.archived || n?.service) { ourStock.delete(k); ourReserve.delete(k); if (n.archived) archivedSkipped++; }
+  }
   const whNames = new Map((await db.select().from(warehouses)).map((w) => [w.id, w.name]));
   const label = (variantId: number, warehouseId: number) => ({
     product: names.get(variantId)?.p ?? `#${variantId}`, variant: names.get(variantId)?.v ?? '', warehouse: whNames.get(warehouseId) ?? `#${warehouseId}`,
@@ -97,7 +103,7 @@ export async function reconcileMoySklad(db: Db, ms: MsClient): Promise<Reconcile
   }
 
   return {
-    stock: compare(msStock, ourStock),
+    stock: { ...compare(msStock, ourStock), archivedSkipped },
     reserve: compare(msReserve, ourReserve),
     balances: { compared: keys.size, matched: keys.size - balanceDiffs.length, diffs: balanceDiffs, signFlipped: sign === -1 },
   };

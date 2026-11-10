@@ -250,12 +250,18 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
 
   // 10. Belgeler
   const statesCache = new Map<string, string>();
+  const finalStates = new Set<string>();
+  const serviceVariants = new Set((await db.select({ id: variants.id }).from(variants).innerJoin(products, eq(products.id, variants.productId))
+    .where(eq(products.isService, true))).map((r) => r.id));
   for (const { ms: msType, type, parent } of MS_DOCUMENT_TYPES) {
     if (opts.types && !opts.types.includes(msType)) continue;
     const def = docType(type);
     try {
       const meta = await ms.get<Ms>(`/entity/${msType}/metadata`);
-      for (const s of meta.states ?? []) statesCache.set(s.id, s.name);
+      for (const s of meta.states ?? []) {
+        statesCache.set(s.id, s.name);
+        if (s.stateType && s.stateType !== 'Regular') finalStates.add(s.id);
+      }
     } catch { /* durum yok */ }
 
     let done = 0;
@@ -317,10 +323,13 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
       });
     }
 
-    const sum = def.lines ? lines.reduce((s, l) => s + Math.round(l.qty * l.price * (1 - l.discount / 100)), 0) : toRubKopeks(kop(d.sum), rate);
+    const linesSum = lines.reduce((s, l) => s + Math.round(l.qty * l.price * (1 - l.discount / 100)), 0);
+    // Komisyoncu raporu: cariye komisyon düşülmüş tutar yazılır.
+    const sum = type === 'commissionreportin' ? toRubKopeks(kop(d.commitentSum ?? d.sum), rate) : def.lines ? linesSum : toRubKopeks(kop(d.sum), rate);
     const status = d.state ? (statesCache.get(idOf(d.state) ?? '') ?? null) : null;
     const values = {
       type, number: String(d.name ?? ''), moment: new Date(moment), posted: !!d.applicable, status,
+      closed: d.state ? finalStates.has(idOf(d.state) ?? '') : false,
       warehouseId: def.warehouse ? warehouseId : null,
       targetWarehouseId: def.targetWarehouse ? ref('store', idOf(d.targetStore)) : null,
       counterpartyId, accountId: account, sum, comment: d.description ?? null, parentId,
@@ -352,8 +361,9 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
         const r = postDocument({
           id: docId, type, moment, warehouseId: values.warehouseId, targetWarehouseId: values.targetWarehouseId,
           counterpartyId, accountId: account, sum,
-          lines: lines.map((l, i) => ({ variantId: l.variantId, qty: l.qty, price: l.price, discount: l.discount, lineId: inserted[i]!.id })),
-        });
+          lines: lines.map((l, i) => ({ variantId: l.variantId, qty: l.qty, price: l.price, discount: l.discount, lineId: inserted[i]!.id,
+            noStock: serviceVariants.has(l.variantId) })),
+        }, { settlementOptional: agentType !== 'counterparty' });
         await writeLedgers(tx, r);
       } catch (e) {
         if (!(e instanceof DomainError)) throw e;

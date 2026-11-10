@@ -162,10 +162,27 @@ describe('FIFO kalan stok değeri ve sayım', () => {
 describe('düzeltme ve bilgi belgeleri', () => {
   it('cari düzeltmesi işaretli tutarı aynen yazar', () => {
     expect(postDocument({ id: 1, type: 'counterpartyadjustment', moment, counterpartyId: 3, sum: -500, lines: [] }).settlement[0]!.amount).toBe(-500);
-    expect(() => postDocument({ id: 1, type: 'counterpartyadjustment', moment, counterpartyId: 3, sum: 0, lines: [] })).toThrow(/нулевой/);
+    // Sıfır tutarlı düzeltme hata vermez, etkisi yoktur (МойСклад'da da böyle)
+    expect(postDocument({ id: 1, type: 'counterpartyadjustment', moment, counterpartyId: 3, sum: 0, lines: [] }).settlement).toEqual([]);
   });
-  it('vardiya ve komisyoncu raporu defterlere yazmaz', () => {
+  it('vardiya defterlere yazmaz', () => {
     const r = postDocument({ id: 2, type: 'retailshift', moment, lines: [] });
     expect([r.stock, r.settlement, r.money]).toEqual([[], [], []]);
+  });
+  it('komisyoncu raporu stok yazmaz, cariye komisyon düşülmüş tutarı yazar', () => {
+    const r = postDocument({ id: 3, type: 'commissionreportin', moment, counterpartyId: 9, sum: 9400, lines: [{ variantId: 1, qty: 1, price: 10000 }] });
+    expect(r.stock).toEqual([]);
+    expect(r.settlement[0]!.amount).toBe(9400);
+  });
+  it('hizmet satırı stok yazmaz', () => {
+    const r = postDocument({ id: 4, type: 'retaildemand', moment, warehouseId: 1, accountId: 1, lines: [{ variantId: 1, qty: 1, price: 100 }, { variantId: 2, qty: 1, price: 50, noStock: true }] });
+    expect(r.stock.map((x) => x.variantId)).toEqual([1]);
+    expect(r.money[0]!.amount).toBe(150);
+  });
+  it('çalışandan kasa tahsilatı: cari isteğe bağlıysa yalnızca kasaya yazar', () => {
+    expect(() => postDocument({ id: 5, type: 'cashin', moment, accountId: 1, sum: 100, lines: [] })).toThrow(DomainError);
+    const r = postDocument({ id: 5, type: 'cashin', moment, accountId: 1, sum: 100, lines: [] }, { settlementOptional: true });
+    expect(r.settlement).toEqual([]);
+    expect(r.money[0]!.amount).toBe(100);
   });
 });

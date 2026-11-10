@@ -9,6 +9,13 @@ export interface DocLine {
   /** Birim fiyat, kopek. */
   price: Kopeks;
   discount?: number;
+  /** Hizmet satırı: stok hareketi yazılmaz. */
+  noStock?: boolean;
+}
+
+export interface PostOptions {
+  /** Cari zorunlu belgede cari yoksa hata verme, yalnızca cari kaydını atla (ör. çalışandan kasa tahsilatı). */
+  settlementOptional?: boolean;
 }
 
 export interface PostableDocument {
@@ -51,7 +58,7 @@ export function documentSum(doc: Pick<PostableDocument, 'type' | 'lines' | 'sum'
 }
 
 /** Belgeyi doğrular ve işlendiğinde defterlere yazılacak kayıtları üretir. Saf fonksiyon: veritabanına dokunmaz. */
-export function postDocument(doc: PostableDocument): PostingResult {
+export function postDocument(doc: PostableDocument, opts: PostOptions = {}): PostingResult {
   const def = docType(doc.type);
   const sum = documentSum(doc);
   const need = (cond: unknown, field: string) => {
@@ -63,7 +70,7 @@ export function postDocument(doc: PostableDocument): PostingResult {
     need(doc.targetWarehouseId, 'targetWarehouse');
     if (doc.targetWarehouseId === doc.warehouseId) throw new DomainError('Склады отправителя и получателя совпадают', 'same_warehouse');
   }
-  if (def.settle) need(doc.counterpartyId, 'counterparty');
+  if (def.settle && !opts.settlementOptional) need(doc.counterpartyId, 'counterparty');
   if (def.money) need(doc.accountId, 'account');
   if (def.lines) {
     if (doc.lines.length === 0 && (def.stock || def.targetWarehouse)) throw new DomainError('Документ без позиций', 'empty_document');
@@ -75,14 +82,13 @@ export function postDocument(doc: PostableDocument): PostingResult {
     }
   } else if ((def.settle || def.money) && !def.signedSum && !(sum > 0)) {
     throw new DomainError('Сумма должна быть больше нуля', 'bad_sum');
-  } else if (def.signedSum && sum === 0) {
-    throw new DomainError('Сумма не может быть нулевой', 'bad_sum');
   }
 
   const stock: StockEntry[] = [];
   const base = { documentId: doc.id, moment: doc.moment };
+  const stockLines = doc.lines.filter((l) => !l.noStock);
   if (def.stock) {
-    for (const l of doc.lines) {
+    for (const l of stockLines) {
       stock.push({
         ...base, lineId: l.lineId, variantId: l.variantId, warehouseId: doc.warehouseId!,
         qty: roundQty(def.stock * l.qty),
@@ -91,13 +97,15 @@ export function postDocument(doc: PostableDocument): PostingResult {
     }
   }
   if (def.targetWarehouse) {
-    for (const l of doc.lines) {
+    for (const l of stockLines) {
       stock.push({ ...base, lineId: l.lineId, variantId: l.variantId, warehouseId: doc.warehouseId!, qty: -roundQty(l.qty), unitCost: null });
       stock.push({ ...base, lineId: l.lineId, variantId: l.variantId, warehouseId: doc.targetWarehouseId!, qty: roundQty(l.qty), unitCost: null });
     }
   }
 
-  const settlement: SettlementEntry[] = def.settle ? [{ ...base, counterpartyId: doc.counterpartyId!, amount: def.settle * sum }] : [];
+  const settleAmount = def.settleFromSum ? (doc.sum ?? 0) : sum;
+  const settlement: SettlementEntry[] =
+    def.settle && doc.counterpartyId && settleAmount !== 0 ? [{ ...base, counterpartyId: doc.counterpartyId, amount: def.settle * settleAmount }] : [];
   const money: MoneyEntry[] = def.money ? [{ ...base, accountId: doc.accountId!, amount: def.money * sum }] : [];
   return { sum, stock, settlement, money };
 }

@@ -31,10 +31,10 @@ export async function stockReport(db: DbOrTx, q: { warehouseId?: number; search?
     const res = (await db.execute(sql`
       select l.variant_id, o.warehouse_id, greatest(sum(coalesce(l.reserve, l.qty)) - coalesce((
         select sum(cl.qty) from ${documentLines} cl join ${documents} c on c.id = cl.document_id
-        where c.parent_id = o.id and c.type = ${childType} and c.posted and not c.deleted and cl.variant_id = l.variant_id
+        where c.parent_id = o.id and c.type in (${childType}, 'retaildemand') and c.posted and not c.deleted and cl.variant_id = l.variant_id
       ), 0), 0) as qty
       from ${documents} o join ${documentLines} l on l.document_id = o.id
-      where o.type = ${orderType} and o.posted and not o.deleted and coalesce(o.status, '') not in ('cancelled', 'delivered', 'closed')
+      where o.type = ${orderType} and o.posted and not o.deleted and not o.closed and coalesce(o.status, '') not in ('cancelled', 'delivered', 'closed')
       group by o.id, o.warehouse_id, l.variant_id`)) as unknown as { rows: { variant_id: number; warehouse_id: number; qty: string }[] };
     const m = new Map<string, number>();
     for (const r of res.rows) m.set(`${r.variant_id}:${r.warehouse_id}`, (m.get(`${r.variant_id}:${r.warehouse_id}`) ?? 0) + Number(r.qty));

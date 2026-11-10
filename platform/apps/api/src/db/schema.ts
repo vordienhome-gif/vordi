@@ -164,6 +164,8 @@ export const documents = pgTable('documents', {
   moment: timestamp('moment', { withTimezone: true }).notNull(),
   posted: boolean('posted').notNull().default(false),
   status: text('status'),
+  /** Final durumda (Доставлен, Отменен …) sipariş: rezerv / beklenen stok tutmaz. */
+  closed: boolean('closed').notNull().default(false),
   organizationId: integer('organization_id').references(() => organizations.id),
   retailPointId: integer('retail_point_id').references(() => retailPoints.id),
   warehouseId: integer('warehouse_id').references(() => warehouses.id),

@@ -105,9 +105,12 @@ export async function saveDocument(db: Db, user: Me, data: DocumentData, id?: nu
     }
 
     const lines = def.lines ? data.lines : [];
+    const services = new Set<number>();
     if (lines.length) {
-      const found = await tx.select({ id: variants.id }).from(variants).where(inArray(variants.id, lines.map((l) => l.variantId)));
+      const found = await tx.select({ id: variants.id, isService: products.isService }).from(variants)
+        .innerJoin(products, eq(products.id, variants.productId)).where(inArray(variants.id, lines.map((l) => l.variantId)));
       if (found.length !== new Set(lines.map((l) => l.variantId)).size) throw new HttpError(400, 'Модификация не найдена', 'bad_variant');
+      for (const f of found) if (f.isService) services.add(f.id);
     }
     // Sayım: beklenen miktar kayıt anındaki stoktur.
     const expected = type === 'inventory' && data.warehouseId ? await stockAt(tx, data.warehouseId, lines.map((l) => l.variantId)) : null;
@@ -115,7 +118,8 @@ export async function saveDocument(db: Db, user: Me, data: DocumentData, id?: nu
     const moment = data.moment ?? new Date().toISOString();
     const posting = data.posted
       ? postDocument({ id: id ?? 0, type, moment, warehouseId: data.warehouseId, targetWarehouseId: data.targetWarehouseId,
-          counterpartyId: data.counterpartyId, accountId: data.accountId, sum: data.sum, lines })
+          counterpartyId: data.counterpartyId, accountId: data.accountId, sum: data.sum,
+          lines: lines.map((l) => ({ ...l, noStock: services.has(l.variantId) })) })
       : null;
     const sum = posting?.sum ?? (def.lines ? lines.reduce((s, l) => s + Math.round(l.qty * l.price * (1 - l.discount / 100)), 0) : (data.sum ?? 0));
 
@@ -151,7 +155,7 @@ export async function saveDocument(db: Db, user: Me, data: DocumentData, id?: nu
     if (data.posted) {
       await writeLedgers(tx, postDocument({ id: docId, type, moment, warehouseId: data.warehouseId, targetWarehouseId: data.targetWarehouseId,
         counterpartyId: data.counterpartyId, accountId: data.accountId, sum: data.sum,
-        lines: lines.map((l, i) => ({ ...l, lineId: lineIds[i] })) }));
+        lines: lines.map((l, i) => ({ ...l, lineId: lineIds[i], noStock: services.has(l.variantId) })) }));
     }
     await tx.insert(auditLog).values({ employeeId: user.id, action: data.posted ? 'save_posted' : 'save_draft', entity: 'document', entityId: docId, data: { type, number, sum } });
     return docId;
