@@ -185,13 +185,13 @@ packages/
 | Mevcut sistemler | **МойСклад JSON API 1.2**, **InSales API** (iki mağaza) | Geçiş döneminde iki yönlü; Vordi'de InSales adaptörü var |
 | Ödeme | ЮKassa, CloudPayments, Т-Банк эквайринг, **СБП** | İnternet satışında fiş (54-ФЗ) ödeme sağlayıcısıyla birlikte çözülmeli |
 | Kargo | **СДЭК**, Boxberry, Почта России, Яндекс Доставка, Ozon/WB teslim noktaları | Etiket, takip numarası, ПВЗ listesi, kapıda ödeme tahsilatının cariye yansıması |
-| Pazaryeri | **Ozon, Wildberries, Яндекс Маркет** (Vordi'de adaptör var), Мегамаркет | FBS/FBO, stok-fiyat, sipariş, iptal, etiket |
+| Pazaryeri | **Ozon, Wildberries** (bugün satış var), **Яндекс Маркет, Lamoda, Avito** (yakında), Мегамаркет | FBS/FBO, stok-fiyat, sipariş, iptal, etiket; Ozon/WB/YM için Vordi'de adaptör var |
 | Kasa (54-ФЗ) | ККТ: АТОЛ / Эвотор / Штрих-М; ОФД | Mağaza kasası değişimi **en son** adım |
 | Markalama | **Честный знак** (True API, разрешительный режим, ЛМ ЧЗ) | Giyim/tekstil/ayakkabıda zorunlu — ürün grubunuza göre |
 | ЭДО | Диадок, СБИС, Контур | Toptan müşterilere УПД; markalı ürün kabulü |
 | Muhasebe | 1С:Бухгалтерия'ya aktarım | Muhasebecinin kullandığı formata göre |
 | Banka | Т-Банк, Точка, Сбер API ile hesap ekstresi | Toptan tahsilatlarının cariye otomatik işlenmesi |
-| Bildirim | SMS, e-posta, Telegram | Sipariş/kargo durumları |
+| Bildirim | SMS, e-posta, Telegram, mobil push | SMS ücretlidir; mümkün olan her bildirim önce ücretsiz kanaldan (push, Telegram, e-posta), SMS yalnızca gerektiğinde |
 | Yasal | **152-ФЗ** (kişisel veriler Rusya'daki sunucuda), Роскомнадзор bildirimi | Sunucu: Yandex Cloud, Selectel veya VK Cloud |
 
 ### Her entegrasyonun ortak kuralları
@@ -209,12 +209,12 @@ Hedef abonelikleri bitirmek olduğu için sıralama, **en çok abonelik kapatan 
 | **0. Keşif** | МойСклад ve InSales'teki ürün yapısı, fiyat türleri, belge türleri, ödeme/kargo ayarları; 300 $'ın dağılımı; ККТ modeli; veri modeli; sunucu kiralama | 1–2 hafta | Onaylı kapsam ve iş listesi | — |
 | **1. Çekirdek + panel + МойСклад aktarımı** | Katalog, varyant, fiyat türleri, depo/stok defteri, cari, belgeler, kullanıcılar; МойСклад API'sinden sürekli içe aktarma ve otomatik karşılaştırma | 6–8 hafta | Bütün veri bizde, doğruluğu kanıtlanmış | — |
 | **2. Store API + iki site** | Müşteri hesabı, sepet, sipariş, ödeme (ЮKassa vb. + internet fişi), СДЭК; tek Next.js kod tabanından iki site: perakende (vordien.ru) ve toptan (elitmosteks.ru: giriş, müşteriye özel fiyat, cari ekstre, hızlı sipariş); InSales'ten ürün içeriği, görseller, müşteriler, **URL'ler ve 301 yönlendirmeler** taşınır | 8–10 hafta | Siteler kendi altyapımızda | **InSales ×2** |
-| **3. Ana kaynağın devri** | Depo, cari, belgeler artık kendi çekirdekte tutulur; mağaza satışları geçici olarak МойСклад kasasından içe aktarılır | 2–3 hafta | Kendi altyapımız ana sistem | — |
-| **4. Kendi kasamız** | Mağaza kasası (ККТ ile 54-ФЗ fişi, vardiya, iade, Честный знак); önce mesai dışı test, sonra birkaç gün paralel, sonra tam geçiş | 4–6 hafta | Mağaza da bizde | **МойСклад** |
+| **3. Pazaryerleri + ana kaynağın devri** | Ozon ve WB (bugün satış var) МойСклад'dan önce bizde çalışır olmalı; ardından Яндекс Маркет, Lamoda, Avito. Depo, cari, belgeler artık kendi çekirdekte; mağaza satışları geçici olarak МойСклад kasasından içe aktarılır | 6–8 hafta (ilk ikisi) + 2–3 hafta / yeni pazaryeri | Bütün kanallarda tek stok | — |
+| **4. Kendi kasamız** | АТОЛ ile 54-ФЗ fişi, vardiya, iade, Честный знак (ЛМ ЧЗ); önce mesai dışı test, sonra birkaç gün paralel, sonra tam geçiş | 4–6 hafta | Mağaza da bizde | **МойСклад** |
 | **5. Mobil uygulama** | Expo ile müşteri uygulaması: katalog, sepet, ödeme, sipariş takibi, push bildirim, bonus/sadakat; RuStore + Google Play + App Store | 6–8 hafta | Mobil kanal | — |
-| **6. Büyüme** | Ozon / WB / Яндекс Маркет (Vordi adaptörlerinden), ЭДО, 1С aktarımı, depo mobil uygulaması, CRM | sürekli | — | — |
+| **6. Büyüme** | ЭДО, 1С aktarımı, depo mobil uygulaması (toplama, sayım), CRM, kasayı Android tablete taşıma | sürekli | — | — |
 
-**Toplam:** ~4–5 ayda InSales kapanır, ~6–7 ayda МойСклад kapanır, ~8–9 ayda mobil uygulama yayında.
+**Toplam:** ~4–5 ayda InSales kapanır, ~7–8 ayda МойСклад kapanır, ~9–10 ayda mobil uygulama yayında.
 
 > Geri dönüş yolu: 2. aşamada siteler bir süre InSales'te kapatılmadan bekletilir (aboneliği bir ay daha uzatmak, satış kaybetmekten ucuzdur). 4. aşamada sorun çıkarsa mağaza МойСклад kasasına döner; МойСклад aboneliği kendi kasa en az 2 hafta sorunsuz çalıştıktan sonra kapatılır.
 
@@ -229,25 +229,106 @@ Hedef abonelikleri bitirmek olduğu için sıralama, **en çok abonelik kapatan 
 5. Her değişiklik ayrı dal + pull request; staging'de denenmeden canlıya çıkmaz.
 6. Mimari kararlar `docs/adr/` altında kısa notlar olarak tutulur (neden PostgreSQL, neden modüler monolit vb.).
 
-## 9. Altyapı, güvenlik ve yasal hazırlık
+## 9. Güvenlik
+
+Hiçbir sistem %100 güvenli değildir; amaç **saldırıyı zorlaştırmak, bir açık olursa zararı sınırlamak ve hızla geri dönebilmek**tir. Güvenlik katman katman kurulur:
+
+### 9.1 Sunucu ve ağ
+- Sunucu Rusya'da (152-ФЗ); dışarıya yalnızca 80/443 açık, veritabanı ve Redis **internete kapalı**
+- SSH yalnızca anahtarla, şifreyle giriş ve root girişi kapalı; fail2ban
+- İşletim sistemi güvenlik güncellemeleri otomatik
+- Barındırma sağlayıcısının DDoS koruması (Selectel / DDoS-Guard vb.)
+- HTTPS her yerde (Let's Encrypt, HSTS)
+
+### 9.2 Uygulama
+- Şifreler **argon2/scrypt** ile özetlenir, düz metin hiçbir yerde tutulmaz
+- Yönetim paneli ayrı alan adında (`panel.`), **iki adımlı doğrulama zorunlu**, isteğe bağlı IP kısıtı
+- Rol ve izin sistemi: kasiyer yalnızca kasayı, depocu yalnızca depoyu görür; toptan fiyatlar ve maliyetler yetkisiz kişiye **sunucu tarafında** hiç gönderilmez
+- Her isteğin girdisi şema ile doğrulanır; veritabanı sorguları parametreli (SQL injection'a kapalı); XSS ve CSRF korumaları
+- Giriş, kayıt, ödeme ve API uçlarında hız sınırı (rate limit) ve bot koruması
+- **İşlem geçmişi (audit log):** kim, ne zaman, hangi fiyatı/stoğu/belgeyi değiştirdi — silinemez
+- Ödeme: **kart verisi sunucumuza hiç gelmez** (ЮKassa formu/widget'ı); ödeme webhook'ları imza ve IP ile doğrulanır, tutar sipariş ile karşılaştırılır
+
+### 9.3 Sırlar ve veriler
+- API anahtarları (МойСклад, Ozon, WB, ЮKassa, СДЭК, Честный знак) kodda değil, ortam değişkeninde / şifreli olarak veritabanında
+- Kişisel veriler: aktarım sırasında TLS, yedekler şifreli; gereksiz veri toplanmaz; 152-ФЗ aydınlatma ve rıza metinleri, Роскомнадзор bildirimi
+- **Yedekler:** her gün otomatik, şifreli, **farklı bir sağlayıcıda**; ayda bir geri yükleme denemesi. (Fidye yazılımı veya sunucu kaybında tek kurtuluş budur.)
+
+### 9.4 Geliştirme süreci
+- Her değişiklik pull request + otomatik testler + güvenlik incelemesi ile girer
+- Bağımlılık açıkları otomatik taranır (Dependabot / `npm audit`), GitHub'da gizli anahtar taraması açık
+- Canlıya çıkmadan önce staging'de test; canlıya çıkıştan önce dışarıdan bir sızma testi (pentest) yaptırılması önerilir
+
+### 9.5 İzleme ve olay müdahalesi
+- Hata takibi, uptime izleme, kuyruk birikmesi ve başarısız ödeme alarmları Telegram'a
+- Şüpheli giriş denemeleri ve yönetici işlemleri için bildirim
+- Yazılı "ne yaparız" planı: anahtar sızarsa hangi anahtarlar yenilenir, sunucu çökerse yedekten kaç dakikada dönülür
+
+## 9A. Tek sistemde toptan + perakende
+
+Sorun değil, avantajdır: **tek stok**, tek ürün kartı, tek cari. Ayrım şu katmanlarda yapılır:
+
+| | Perakende (vordien.ru) | Toptan (elitmosteks.ru) |
+|---|---|---|
+| Müşteri | Kişi, misafir alışveriş | Firma (ИП/ООО), ИНН ile kayıt (DaData ile otomatik doldurma), yönetici onayı |
+| Fiyat | Perakende fiyat türü, KDV dahil | Müşteri grubuna özel fiyat türü, kademeli fiyat; giriş yapmadan fiyat görünmez |
+| Ürün görünürlüğü | Perakendeye açık ürünler | Toptana açık ürünler, koli/seri katları, minimum adet/tutar |
+| Ödeme | Kart / СБП + internet fişi (54-ФЗ) | Banka havalesi ile счёт, vadeli ödeme, risk limiti; tüzel kişiye fatura/УПД |
+| Belgeler | Fiş | Счёт, УПД (ileride ЭДО ile) |
+
+İki site **aynı kod tabanından** iki ayrı tema ve kural seti olarak çalışır; ama alan adları, tasarım ve SEO tamamen ayrıdır. Toptan fiyatların perakende sitesine sızmaması API seviyesinde garanti edilir (perakende API anahtarı toptan fiyatı hiç okuyamaz).
+
+> Tüzel kişilerin banka havalesiyle yaptığı ödemelerde kasa fişi gerekip gerekmediği ödeme şekline göre değişir; kurulumda muhasebecinizle teyit edilecek.
+
+Mobil uyumluluk: iki site de önce telefon için tasarlanır (müşterilerin çoğu telefondan gelir); yönetim paneli ve depo ekranları da telefon/tablette çalışır.
+
+## 9B. Kasa (АТОЛ) bağlantısı
+
+Kasa cihazı (ККТ) ФНС'ye kayıtlıdır; **yazılım değişince cihazı yeniden kaydetmek gerekmez**, ОФД sözleşmesi aynen kalır. Değişen yalnızca fişi cihaza kimin gönderdiğidir.
+
+```
+Mağaza bilgisayarı / tablet
+ ┌──────────────────────────────┐
+ │ Bizim kasa ekranı (tarayıcı) │──HTTP──► АТОЛ Web Server (ДТО 10) ──USB──► АТОЛ ККТ ──► ОФД ──► ФНС
+ │                              │──HTTPS─► Bizim sunucu (stok, cari, Честный знак)
+ └──────────────────────────────┘
+```
+
+- Kasa ekranı tarayıcıda çalışan web uygulamasıdır; aynı bilgisayardaki **АТОЛ Web Server**'a JSON görevi gönderir (Vordi'de bu kod hazır: `server/fiscal.js`).
+- İnternet kesilirse kasa çalışmaya devam eder: satışlar yerel olarak tutulur, bağlantı gelince sunucuya gönderilir (fiş zaten cihazdan çıkmıştır).
+- Честный знак: perakendede markalı ürün satışında **разрешительный режим** ve **yerel modül (ЛМ ЧЗ)** kullanılır; kasa satıştan önce kodu kontrol eder.
+- İnternet satışları için ayrı bir **bulut kasa** gerekir (mağazadaki cihaz siteden gelen ödemeye fiş kesemez): АТОЛ Онлайн veya ödeme sağlayıcısının fiş hizmeti.
+- **Model önemli:** АТОЛ 30Ф, 20Ф, 25Ф, 55Ф gibi bilgisayara bağlanan fiskal kaydediciler bu şemayla doğrudan çalışır. АТОЛ Sigma gibi kendi ekranı ve işletim sistemi olan akıllı terminaller farklı yol ister (cihazın kendi uygulama platformu veya yanına ayrı bir kaydedici). Model, cihazın arkasındaki etikette veya МойСклад kasa ayarlarında yazar.
+- İleride kasa Android tablete taşınabilir (АТОЛ'ün Android sürücüsü ile, mobil uygulamayla aynı teknoloji).
+
+## 9C. Mobil uygulama
+
+- **Teknoloji:** React Native + Expo, TypeScript. Web siteleriyle aynı API istemcisini ve tipleri kullanır; tek kod Android ve iOS'ta çalışır. Uygulama mağazası onayı gerektirmeyen küçük düzeltmeler havadan güncellemeyle (EAS Update) gönderilir.
+- **İçerik:** katalog ve arama, sepet, hesap, sipariş geçmişi ve kargo takibi, favoriler, bonus/sadakat kartı (mağazada da QR ile kullanılabilir), push bildirim, toptan müşteriler için hızlı sipariş ve cari ekstre.
+- **Ödeme:** ЮKassa mobil SDK veya СБП (banka uygulamasına yönlendirme).
+- **Push:** RuStore Push + Firebase (Android), Apple Push (iOS).
+- **Yayın:** **RuStore** ve Google Play (Android). iOS için App Store'da Rusya'dan geliştirici hesabı açmak ve yayın yapmak bugün sorunlu olabilir; yayın zamanı geldiğinde güncel durum kontrol edilir. iOS kullanıcıları için yedek yol: sitenin "ana ekrana ekle" ile açılan PWA sürümü.
+- Mobil uygulama ayrı bir sistem değildir: aynı Store API'yi kullandığı için sipariş, stok ve bonus web ve mağaza ile anında ortaktır.
+
+## 9D. Altyapı ve yasal hazırlık
 
 - HTTPS, alan adları (ör. `panel.vordien.ru` yönetim, `api.vordien.ru` çekirdek; mevcut site adresleri korunur)
-- **152-ФЗ:** sunucu ve veritabanı Rusya'da
-- Günlük otomatik veritabanı yedeği + geri yükleme denemesi
-- Kişisel veri: aydınlatma metni, açık rıza, saklama süreleri, veri sahibi talepleri (152-ФЗ)
-- Yönetim paneline iki adımlı doğrulama, IP kısıtı seçeneği
-- Hız sınırı (rate limit) ve bot koruması, özellikle giriş ve ödeme sayfalarında
-- İzleme: hata bildirimi, yavaş sorgular, kuyruk birikmesi alarmları
+- **152-ФЗ:** sunucu ve veritabanı Rusya'da; kişisel veri politikası, rıza metinleri, Роскомнадзор bildirimi
 
-## 10. Başlamadan önce netleşmesi gerekenler
+## 10. Netleşenler ve açık sorular
 
-1. **300 $'ın dağılımı:** МойСклад tarifesi (kaç kullanıcı, kaç kasa noktası) ve iki InSales tarifesi ayrı ayrı ne kadar? Ek ücretli eklentiler (bulut kasa, SMS, pazaryeri bağlantısı) var mı?
-2. Mağazadaki **kasa cihazı hangi marka/model** (АТОЛ, Эвотор, Штрих-М)? Эвотор ise kendi yazılımla kullanım farklı yol ister.
-3. Ürün grubu nedir — **Честный знак markalı** ürün (giyim, tekstil, ayakkabı…) var mı?
-4. Toptanda **vadeli satış / açık hesap** var mı? Kaç farklı fiyat türü (тип цен) kullanıyorsunuz? Toptan müşteriler tüzel kişi mi (ИП/ООО), УПД/ЭДО istiyorlar mı?
-5. Hangi pazaryerlerinde satış var veya planlanıyor? МойСклад'ın pazaryeri bağlantılarını kullanıyor musunuz?
-6. Ödeme ve kargo bugün InSales'te hangi sağlayıcılarla çalışıyor (ЮKassa, СДЭК…)?
-7. Ürün/varyant sayısı, depo sayısı, kaç kullanıcı?
-8. Ekip: kendi geliştiricileriniz olacak mı, yoksa geliştirme ağırlıklı olarak burada (Claude ile) mi yürüyecek?
+**Netleşenler:**
+- Satış Rusya'da. Bugünkü sistemler МойСклад, iki InSales sitesi ve SMS servisleri; toplam ~300 $/ay.
+- Kasa: АТОЛ (model öğrenilecek).
+- Ürün yelpazesi çok geniş → katalog esnek özellik setleriyle kurulur; ürün kartında markalama türü zorunlu alan (birçok kategori Честный знак kapsamında).
+- Ozon ve WB'de bugün satış var; Яндекс Маркет, Lamoda, Avito eklenecek → pazaryerleri МойСклад kapanmadan önce hazır olmalı.
 
-Bu cevaplarla Aşama 0'ın çıktısı olan ayrıntılı iş listesi (issue'lar) ve Aşama 1'in veri modeli hazırlanır. İlk teknik adım olarak **МойСклад API'sinden salt-okunur veri çekme** denenebilir — bunun için МойСклад'da yalnızca okuma yetkili ayrı bir kullanıcı ve onun API token'ı yeterli.
+**Açık sorular:**
+1. АТОЛ kasa modeli (cihazın etiketinde veya МойСклад kasa ayarlarında).
+2. Ozon/WB bağlantısı bugün МойСклад üzerinden mi, elle mi yürüyor? FBS mi FBO mu?
+3. Ürün ve varyant sayısı, depo sayısı, kullanıcı sayısı.
+4. Toptanda vadeli satış / açık hesap var mı, kaç fiyat türü kullanılıyor?
+5. Bugün InSales'te bağlı ödeme ve kargo sağlayıcıları (ЮKassa? СДЭК?) ve internet satışlarının fişi nasıl kesiliyor?
+6. Kod nerede tutulacak: bu depoda mı, yeni bir depoda mı?
+
+İlk teknik adım: proje iskeleti + МойСклад API'sinden **salt-okunur** veri çekme. Bunun için МойСклад'da yalnızca okuma yetkili bir kullanıcı ve API token'ı yeterli (token sohbete yazılmaz, güvenli formla eklenir).
