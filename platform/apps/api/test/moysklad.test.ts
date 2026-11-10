@@ -124,8 +124,8 @@ describe('МойСклад aktarımı (sahte veriyle)', () => {
     const rec = await reconcileMoySklad(db, fakeMs(data, extra));
     expect(rec.stock.diffs).toEqual([]);
     expect(rec.reserve.diffs).toEqual([]);
-    // Cari: −3 050 000 (mal kabul) + 100 000 (ödeme) + 55 000 (sevkiyat) + 94 000 (komisyoncu raporu, komisyon düşülmüş) = −2 801 000
-    expect(rec.balances.diffs).toEqual([{ counterparty: 'ООО Текстиль', moysklad: 3110000 * (rec.balances.signFlipped ? -1 : 1), vordi: -2801000 }]);
+    // Cari: −3 050 000 (mal kabul) + 100 000 (ödeme) + 55 000 (sevkiyat) + 100 000 (komisyoncu raporu: satış − iade) = −2 795 000
+    expect(rec.balances.diffs).toEqual([{ counterparty: 'ООО Текстиль', moysklad: 3110000 * (rec.balances.signFlipped ? -1 : 1), vordi: -2795000 }]);
     await close();
   });
 });

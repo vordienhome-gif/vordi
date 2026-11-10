@@ -308,7 +308,7 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
     }
 
     // Satırlar
-    type Line = { variantId: number; qty: number; price: number; discount: number; vat: number | null; expected: number | null; reserve: number | null; codes: string[] };
+    type Line = { variantId: number; qty: number; price: number; discount: number; vat: number | null; expected: number | null; reserve: number | null; shipped: number | null; codes: string[] };
     const lines: Line[] = [];
     for (const p of d.positions?.rows ?? []) {
       const variantId = ref('assortment', idOf(p.assortment));
@@ -319,13 +319,20 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
       lines.push({
         variantId, qty: Number(p.quantity ?? 0), price: toRubKopeks(kop(p.price), rate), discount: Number(p.discount ?? 0),
         vat: p.vatEnabled === false ? null : (p.vat ?? null), expected: type === 'inventory' ? Number(p.calculatedQuantity ?? 0) : null,
-        reserve: type === 'customerorder' ? Number(p.reserve ?? 0) : null, codes,
+        reserve: type === 'customerorder' ? Number(p.reserve ?? 0) : null,
+        shipped: type === 'customerorder' || type === 'purchaseorder' ? Number(p.shipped ?? 0) : null, codes,
       });
     }
 
     const linesSum = lines.reduce((s, l) => s + Math.round(l.qty * l.price * (1 - l.discount / 100)), 0);
-    // Komisyoncu raporu: cariye komisyon düşülmüş tutar yazılır.
-    const sum = type === 'commissionreportin' ? toRubKopeks(kop(d.commitentSum ?? d.sum), rate) : def.lines ? linesSum : toRubKopeks(kop(d.sum), rate);
+    // Komisyoncu raporu: cariye satış tutarı − komisyoncuya iadeler yazılır.
+    let returnsValue = 0;
+    if (type === 'commissionreportin' && d.returnToCommissionerPositions?.meta?.size) {
+      for await (const page of ms.listAll<Ms>(`/entity/commissionreportin/${d.id}/returntocommissionerpositions`)) {
+        for (const r of page) returnsValue += Number(r.price ?? 0) * Number(r.quantity ?? 0);
+      }
+    }
+    const sum = type === 'commissionreportin' ? toRubKopeks(kop(Number(d.sum ?? 0) - returnsValue), rate) : def.lines ? linesSum : toRubKopeks(kop(d.sum), rate);
     const status = d.state ? (statesCache.get(idOf(d.state) ?? '') ?? null) : null;
     const values = {
       type, number: String(d.name ?? ''), moment: new Date(moment), posted: !!d.applicable, status,
@@ -342,7 +349,7 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
 
     const inserted = lines.length
       ? await tx.insert(documentLines).values(lines.map((l) => ({ documentId: docId, variantId: l.variantId, qty: l.qty, price: l.price,
-          discount: l.discount, expected: l.expected, reserve: l.reserve, vat: l.vat }))).returning({ id: documentLines.id })
+          discount: l.discount, expected: l.expected, reserve: l.reserve, shipped: l.shipped, vat: l.vat }))).returning({ id: documentLines.id })
       : [];
     const codeRows: { lineId: number; documentId: number; cis: string; raw: string }[] = [];
     const seen = new Set<string>();

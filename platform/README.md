@@ -39,6 +39,23 @@ docker compose up -d postgres
 DATABASE_URL=postgres://vordi:vordi@localhost:5432/vordi pnpm dev
 ```
 
+## МойСклад'dan aktarım
+
+МойСклад'daki her şeyi (para birimleri, tüzel kişiler, depolar, fiyat türleri, ürün grupları, cariler, çalışanlar, ürünler, hizmetler, modifikasyonlar, barkodlar, fiyatlar, satış noktaları ve 21 türde tüm belgeler) aktarır, sonra iki sistemi karşılaştırır.
+
+1. МойСклад'da yalnızca **okuma** yetkili bir kullanıcı açın, onun için token oluşturun (Настройки → Токены).
+2. Token'ı ortam değişkenine verin (dosyaya veya depoya yazmayın):
+
+```bash
+MOYSKLAD_TOKEN=... pnpm --filter @vordi/api import:moysklad --report=mutabakat.json
+```
+
+- Tekrar çalıştırmak güvenlidir: mevcut kayıtlar güncellenir, kopya oluşmaz. Geçiş döneminde her gün çalıştırılabilir.
+- `--no-documents` yalnızca kartlar, `--types=demand,supply` yalnızca belirli belgeler, `--reconcile-only` yalnızca karşılaştırma.
+- Mutabakat: depo bazında stok, sipariş rezervi ve cari bakiyeleri МойСклад raporlarıyla karşılaştırılır; farklar ürün/depo/cari adıyla rapora yazılır. МойСклад arşivdeki ürünlerin stokunu raporlarında göstermediği için bunlar ayrı sayılır.
+
+İlk deneme aktarımının sonucu (10.11.2026): ~6 300 belge 5 dakikada; **stok 3 690/3 690 satır birebir**, cari bakiyeleri 89/90, sipariş rezervi 21/60 (kalan farklar 1–4 adet, inceleniyor).
+
 ## Testler
 
 ```bash

@@ -196,6 +196,8 @@ export const documentLines = pgTable('document_lines', {
   expected: qty('expected'),
   /** Müşteri siparişinde ayrılan miktar. Boşsa satırın tamamı rezerv sayılır. */
   reserve: qty('reserve'),
+  /** Siparişte teslim edilen miktar (МойСклад `shipped`). Boşsa bağlı sevkiyatlardan hesaplanır. */
+  shipped: qty('shipped'),
   vat: integer('vat'),
 }, (t) => [index('document_lines_doc_idx').on(t.documentId)]);
 

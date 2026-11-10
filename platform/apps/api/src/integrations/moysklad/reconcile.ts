@@ -34,8 +34,11 @@ export async function reconcileMoySklad(db: Db, ms: MsClient): Promise<Reconcile
   const ourReserve = new Map<string, number>();
   for (const r of await stockReport(db, {})) if (r.reserve) ourReserve.set(`${r.variantId}:${r.warehouseId}`, r.reserve);
 
-  const names = new Map((await db.select({ id: variants.id, p: products.name, v: variants.name, archived: sql<boolean>`${products.archived} or ${variants.archived}`, service: products.isService })
-    .from(variants).innerJoin(products, eq(products.id, variants.productId))).map((r) => [r.id, r]));
+  // Ürünün "ana" varyantı (modifikasyonlu üründe arşivde tutulur) ürün düzeyindeki stoktur; arşiv sayılmaz.
+  const defaultVariants = new Set(refRows.filter((r) => r.entity === 'product-default-variant').map((r) => r.localId));
+  const names = new Map((await db.select({ id: variants.id, p: products.name, v: variants.name, pa: products.archived, va: variants.archived, service: products.isService })
+    .from(variants).innerJoin(products, eq(products.id, variants.productId)))
+    .map((r) => [r.id, { ...r, archived: r.pa || (r.va && !defaultVariants.has(r.id)) }]));
   // МойСклад stok raporları arşivdeki ürünleri hiç göstermez; bunlar ayrı sayılır.
   let archivedSkipped = 0;
   for (const k of [...ourStock.keys()]) {

@@ -1,0 +1,1 @@
+ALTER TABLE "document_lines" ADD COLUMN "shipped" numeric(15, 3);
