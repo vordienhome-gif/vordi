@@ -26,7 +26,29 @@ Değiştirme sırası riske göre belirlenir:
 1. **En az riskli:** raporlama, B2B'ye özel işlevler, pazaryeri senkronizasyonu (bunlar МойСклад'ı bozmadan eklenebilir).
 2. **Orta risk:** depo/cari/belge ana kaynağının МойСклад'dan kendi çekirdeğe taşınması; InSales sitelerinin kendi çekirdeğe bağlanması.
 3. **En yüksek risk — en son:** fiziksel mağaza kasası (54-ФЗ, ККТ, Честный знак). Hata vergi cezası demektir; bu adım ancak her şey oturduktan sonra ve gerçek cihazda test edilerek yapılır.
-4. **İsteğe bağlı:** InSales sitelerinin kendi sitelerimizle değiştirilmesi. InSales iyi çalışıyorsa perakende sitesini değiştirmeye gerek olmayabilir; toptan portalı ise InSales'in B2B sınırlarına takıldığı yerde kendi uygulamamıza taşınır.
+4. **Siteler:** iki InSales sitesi kendi sitelerimizle değiştirilir. Hedef abonelikleri bitirmek ve mobil uygulamayla aynı altyapıyı kullanmak olduğu için bu adım isteğe bağlı değil; ancak SEO kaybı olmaması için adresler ve yönlendirmeler korunarak yapılır.
+
+## 0.1 Hedef ve ekonomi
+
+**Hedefler:**
+1. Aylık ~300 $'lık abonelik giderini (МойСклад + iki InSales sitesi) bitirmek.
+2. Gelecekteki her şeyin — perakende ve toptan siteleri, **müşteri mobil uygulaması**, mağaza kasası, depo uygulaması — üzerine kurulacağı **kendi altyapınıza** sahip olmak.
+
+**Gerçekçi tablo:** Kendi sistem de sıfır maliyetli değildir. Abonelik gider, ama yerine şunlar gelir:
+
+| Kalem | Tahmini aylık | Not |
+|---|---|---|
+| Rusya'da sunucu (4 vCPU / 8 GB, Selectel / Timeweb / Yandex Cloud) | ~2 000–5 000 ₽ | 152-ФЗ gereği Rusya'da |
+| Yedek ve görsel depolama (S3 uyumlu) | ~300–800 ₽ | |
+| SSL, alan adları | ~0 | Let's Encrypt; alan adları zaten var |
+| SMS / e-posta gönderimi | kullanıma göre | Bugün InSales içinde ödeniyor olabilir |
+| ОФД, ödeme komisyonu, internet satışı fişi (bulut kasa), Честный знак | **değişmez** | Bunlar hangi yazılımı kullanırsanız kullanın ödenir |
+
+Kabaca **aylık ~50–80 $ sabit gider** kalır; net tasarruf **~220–250 $/ay**. Bu tasarrufun gerçek olması için geliştirme maliyetinin düşük tutulması gerekir: büyük bir ekip tutulursa geliştirme maliyeti tasarrufu yıllarca geçer. Bu yüzden plan **küçük ve sade** kurulur: geliştirmenin büyük kısmı burada (Claude ile) yapılır, siz ürün sahibi olarak test edip onaylarsınız; gerektiğinde kısa süreli bir serbest geliştirici (ör. kasa cihazı kurulumu, sunucu yönetimi için) alınır.
+
+**Unutulmaması gereken:** Abonelik ücreti sadece yazılım değil, **bakım** parasıdır. Kendi sistemde şunlar sizin sorumluluğunuza geçer: güvenlik güncellemeleri, yedekler, Ozon/WB/СДЭК API değişiklikleri, 54-ФЗ / ФФД format değişiklikleri, Честный знак kural değişiklikleri. Plan, bunları otomatik testler ve izleme ile ucuz tutacak şekilde kurulur.
+
+**Mobil uygulama bu kararı güçlendirir:** InSales üzerinde tam hizmet veren bir mobil uygulama (hesap, sepet, ödeme, bonus, sipariş takibi) kurmak zordur ve yine ek ücretlidir. Kendi çekirdeğimizin **Store API**'si ise web siteleri ve mobil uygulama için tek ve aynı API olur.
 
 ## 1. Temel mimari kararı
 
@@ -72,11 +94,12 @@ Ancak tek süreçli Node + gömülü SQLite ve bağımlılıksız tek sayfa aray
 | Backend | NestJS (veya Fastify + modüller) | Modül sınırları, DI, test edilebilirlik |
 | Veritabanı | **PostgreSQL** | İşlemsel bütünlük (stok/cari için şart), JSONB, raporlama |
 | Kuyruk / önbellek | Redis + BullMQ | Entegrasyon işleri, yeniden deneme, zamanlanmış senkronizasyon |
-| Arama | Meilisearch (ileride OpenSearch) | Ürün arama, filtre, yazım hatası toleransı |
+| Arama | Başta PostgreSQL tam metin arama, ürün sayısı büyüyünce Meilisearch | Ek sunucu maliyeti olmadan başlamak |
 | Perakende + Toptan site | **Next.js** | SEO (perakende için kritik), sunucu tarafı render, hızlı sayfa |
 | Yönetim paneli | React (Vite) + tablo/form kütüphanesi | Yoğun veri girişi, SEO gerekmez |
 | Dosya / görsel | S3 uyumlu depolama + CDN | Ürün görselleri, fatura PDF'leri |
-| Çalıştırma | Docker, staging + prod ortamları, CI/CD | Her değişiklik test edilip otomatik yayına alınır |
+| Mobil uygulama | **React Native (Expo)** | Aynı TypeScript, aynı API istemcisi ve tipler; Android + iOS tek kod |
+| Çalıştırma | Başta **tek VPS + Docker Compose** (Rusya), staging ayrı küçük sunucu; GitHub Actions ile CI/CD | Düşük sabit gider; büyüyünce ayrı veritabanı sunucusuna geçilir |
 | İzleme | Hata takibi (Sentry vb.), log, uptime | Entegrasyon hatalarını müşteriden önce görmek |
 
 ### Önerilen depo yapısı
@@ -88,6 +111,8 @@ apps/
   store-b2b/      Toptan portalı
   api/            Çekirdek backend (Admin API + Store API)
   worker/         Kuyruk işleyici: entegrasyonlar, senkronizasyon, bildirim
+  mobile/         Müşteri mobil uygulaması (Expo) — ileride
+  pos/            Mağaza kasası (tarayıcı/PWA + ККТ sürücüsü) — ileride
 packages/
   domain/         Saf iş kuralları: stok, cari, belge, fiyat (framework'süz, %100 test)
   db/             Şema, migration'lar
@@ -177,21 +202,23 @@ packages/
 
 ## 7. Aşamalar ve takvim
 
-Süreler; 1 kıdemli backend, 1–2 full-stack, 1 frontend geliştirici, yarı zamanlı tasarımcı ve test sorumlusundan oluşan bir ekip için kabaca tahmindir. Ekip küçükse süreler uzar; AI destekli geliştirme bazı kalemleri kısaltır ama entegrasyonlarda karşı tarafın onay ve test süreçleri kısalmaz.
+Hedef abonelikleri bitirmek olduğu için sıralama, **en çok abonelik kapatan ve iki sistemi birlikte ödeme süresini en kısa tutan** şekilde yapılır. Süreler, geliştirmenin ağırlıklı olarak burada (Claude ile) yapıldığı, sizin her hafta test edip geri bildirim verdiğiniz bir çalışma için kabaca tahmindir; sizin test ve karar hızınız takvimi doğrudan etkiler.
 
-| Aşama | Kapsam | Süre | Sonunda elde edilen | МойСклад / InSales |
+| Aşama | Kapsam | Süre | Sonunda elde edilen | Kapanan abonelik |
 |---|---|---|---|---|
-| **0. Keşif** | МойСклад ve InSales'teki gerçek süreçlerin, ayarların, fiyat türlerinin, belge türlerinin çıkarılması; "neyi eksik buluyorsunuz" listesi; ККТ modeli; veri modeli; sunucu seçimi | 2–3 hafta | Onaylı kapsam ve iş listesi | Değişmez |
-| **1. Gölge çekirdek** | Yeni çekirdek + yönetim paneli; МойСклад'dan **tek yönlü sürekli senkron** (ürün, stok, cari, belgeler); stok ve bakiyelerin МойСклад ile otomatik karşılaştırılması; ilk kendi raporlarımız | 8–10 hafta | Veri bizde, doğruluğu kanıtlanmış | Ana kaynak МойСклад |
-| **2. Toptan güçlendirme** | elitmosteks.ru için InSales'in yapamadıklarını sağlamak: müşteriye özel fiyat, cari ekstre, risk limiti, hızlı sipariş — InSales'e eklenti/uygulama olarak veya `opt.` alt alan adında kendi B2B portalımız | 6–8 hafta | Bayiler kendi hesabını, borcunu görür | Paralel |
-| **3. Ana kaynağın devri** | Depo, cari, belgeler kendi çekirdekte; iki InSales sitesi stok/fiyat/siparişi bizden alır; mağaza satışları МойСклад kasasından içe aktarılır; ödeme + СДЭК entegrasyonu | 6–8 hafta | Kendi altyapımız ana sistem | МойСклад yalnızca kasa için |
-| **4. Pazaryerleri** | Ozon, WB, Яндекс Маркет — Vordi adaptörlerinden başlayarak, tek tek | 2–4 hafta / pazaryeri | Tüm kanallarda tek stok | — |
-| **5. Kendi kasamız** | ККТ ile 54-ФЗ fişi, vardiya, iade, Честный знак kontrolü; önce test mağaza saatleri dışında, sonra paralel, sonra tam geçiş | 4–6 hafta | **МойСклад aboneliği kapatılabilir** | Kapanır |
-| **6. İsteğe bağlı** | Perakende sitesini InSales'ten kendi Next.js sitemize taşıma (SEO yönlendirmeleri korunarak), mobil depo uygulaması, ЭДО, 1С aktarımı, CRM | sürekli | — | InSales opsiyonel |
+| **0. Keşif** | МойСклад ve InSales'teki ürün yapısı, fiyat türleri, belge türleri, ödeme/kargo ayarları; 300 $'ın dağılımı; ККТ modeli; veri modeli; sunucu kiralama | 1–2 hafta | Onaylı kapsam ve iş listesi | — |
+| **1. Çekirdek + panel + МойСклад aktarımı** | Katalog, varyant, fiyat türleri, depo/stok defteri, cari, belgeler, kullanıcılar; МойСклад API'sinden sürekli içe aktarma ve otomatik karşılaştırma | 6–8 hafta | Bütün veri bizde, doğruluğu kanıtlanmış | — |
+| **2. Store API + iki site** | Müşteri hesabı, sepet, sipariş, ödeme (ЮKassa vb. + internet fişi), СДЭК; tek Next.js kod tabanından iki site: perakende (vordien.ru) ve toptan (elitmosteks.ru: giriş, müşteriye özel fiyat, cari ekstre, hızlı sipariş); InSales'ten ürün içeriği, görseller, müşteriler, **URL'ler ve 301 yönlendirmeler** taşınır | 8–10 hafta | Siteler kendi altyapımızda | **InSales ×2** |
+| **3. Ana kaynağın devri** | Depo, cari, belgeler artık kendi çekirdekte tutulur; mağaza satışları geçici olarak МойСклад kasasından içe aktarılır | 2–3 hafta | Kendi altyapımız ana sistem | — |
+| **4. Kendi kasamız** | Mağaza kasası (ККТ ile 54-ФЗ fişi, vardiya, iade, Честный знак); önce mesai dışı test, sonra birkaç gün paralel, sonra tam geçiş | 4–6 hafta | Mağaza da bizde | **МойСклад** |
+| **5. Mobil uygulama** | Expo ile müşteri uygulaması: katalog, sepet, ödeme, sipariş takibi, push bildirim, bonus/sadakat; RuStore + Google Play + App Store | 6–8 hafta | Mobil kanal | — |
+| **6. Büyüme** | Ozon / WB / Яндекс Маркет (Vordi adaptörlerinden), ЭДО, 1С aktarımı, depo mobil uygulaması, CRM | sürekli | — | — |
 
-**Toplam:** ~4–5 ayda veri ve toptan işlevleri bizde; ~7–9 ayda МойСклад'dan tamamen bağımsız.
+**Toplam:** ~4–5 ayda InSales kapanır, ~6–7 ayda МойСклад kapanır, ~8–9 ayda mobil uygulama yayında.
 
-> Her aşamanın sonunda geri dönüş mümkün olmalı: 3. aşamada sorun çıkarsa siteler yeniden МойСклад'a bağlanabilir; 5. aşamada sorun çıkarsa mağaza МойСклад kasasına döner.
+> Geri dönüş yolu: 2. aşamada siteler bir süre InSales'te kapatılmadan bekletilir (aboneliği bir ay daha uzatmak, satış kaybetmekten ucuzdur). 4. aşamada sorun çıkarsa mağaza МойСклад kasasına döner; МойСклад aboneliği kendi kasa en az 2 hafta sorunsuz çalıştıktan sonra kapatılır.
+
+> Pazaryerlerinde bugün satış varsa ve bu МойСклад üzerinden yapılıyorsa, ilgili pazaryeri bağlantısı МойСклад kapanmadan **önce** (4. aşamadan önce) devreye alınmalıdır.
 
 ## 8. Çalışma yöntemi
 
@@ -214,7 +241,7 @@ Süreler; 1 kıdemli backend, 1–2 full-stack, 1 frontend geliştirici, yarı z
 
 ## 10. Başlamadan önce netleşmesi gerekenler
 
-1. **МойСклад'da sizi en çok ne zorluyor?** (Fiyat, eksik özellik, toptan müşteri yönetimi, rapor, hız…) — Bu, önceliği belirler; bazı ihtiyaçlar МойСклад'ı tamamen bırakmadan çözülebilir.
+1. **300 $'ın dağılımı:** МойСклад tarifesi (kaç kullanıcı, kaç kasa noktası) ve iki InSales tarifesi ayrı ayrı ne kadar? Ek ücretli eklentiler (bulut kasa, SMS, pazaryeri bağlantısı) var mı?
 2. Mağazadaki **kasa cihazı hangi marka/model** (АТОЛ, Эвотор, Штрих-М)? Эвотор ise kendi yazılımla kullanım farklı yol ister.
 3. Ürün grubu nedir — **Честный знак markalı** ürün (giyim, tekstil, ayakkabı…) var mı?
 4. Toptanda **vadeli satış / açık hesap** var mı? Kaç farklı fiyat türü (тип цен) kullanıyorsunuz? Toptan müşteriler tüzel kişi mi (ИП/ООО), УПД/ЭДО istiyorlar mı?
