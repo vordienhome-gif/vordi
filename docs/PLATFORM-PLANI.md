@@ -323,9 +323,14 @@ Mağaza bilgisayarı / tablet
 - Ürün yelpazesi çok geniş → katalog esnek özellik setleriyle kurulur; ürün kartında markalama türü zorunlu alan (birçok kategori Честный знак kapsamında).
 - Ozon ve WB'de bugün satış var; Яндекс Маркет, Lamoda, Avito eklenecek → pazaryerleri МойСклад kapanmadan önce hazır olmalı.
 
+- Kasa cihazı sistem değişiminde **yenilenecek**: bilgisayara/tablete bağlanan bir fiskal kaydedici (ör. АТОЛ 30Ф, 27Ф veya 55Ф; ФН ile) önerilir; bizim kasa ekranı АТОЛ ДТО 10 / Web Server ile çalışır. Yeni cihaz ФНС'ye kaydedilir, eski cihaz kayıttan çıkarılır (ОФД ve servis firması yardımcı olur).
+- Pazaryerlerinde **FBS** (sevkiyatı siz yapıyorsunuz) → sipariş toplama, etiket basma ve kargo teslim akışı depo uygulamasına eklenecek.
+- Kod hem GitHub'da yeni depoda hem kendi bilgisayarınızda tutulacak.
+- Depocu için **barkodlu depo uygulaması** (telefon + el terminali) ilk iskelette hazır.
+- Önce altyapı (МойСклад benzeri çekirdek), sonra siteler. Çekirdek iskeleti: [platform/](../platform/README.md), МойСклад analizi: [platform/docs/MOYSKLAD-ANALIZI.md](../platform/docs/MOYSKLAD-ANALIZI.md).
+
 **Açık sorular:**
-1. АТОЛ kasa modeli (cihazın etiketinde veya МойСклад kasa ayarlarında).
-2. Ozon/WB bağlantısı bugün МойСклад üzerinden mi, elle mi yürüyor? FBS mi FBO mu?
+1. Ozon/WB bağlantısı bugün МойСклад üzerinden mi yürüyor?
 3. Ürün ve varyant sayısı, depo sayısı, kullanıcı sayısı.
 4. Toptanda vadeli satış / açık hesap var mı, kaç fiyat türü kullanılıyor?
 5. Bugün InSales'te bağlı ödeme ve kargo sağlayıcıları (ЮKassa? СДЭК?) ve internet satışlarının fişi nasıl kesiliyor?
