@@ -14,6 +14,7 @@ const ru = {
   stock: 'Остаток', reserve: 'Резерв', available: 'Доступно', counted: 'Посчитано', codes: 'Кодов',
   empty: 'Пока ничего не отсканировано', needWarehouse: 'Выберите склад', needTarget: 'Выберите склад-получатель',
   inventoryApplied: 'Излишки оприходованы, недостачи списаны', cameraError: 'Нет доступа к камере (нужен HTTPS и разрешение)',
+  sharedBarcode: 'Этот штрихкод есть и у других товаров',
   lang: 'Türkçe',
 };
 type Dict = typeof ru;
@@ -31,6 +32,7 @@ const tr: Dict = {
   stock: 'Stok', reserve: 'Rezerv', available: 'Kullanılabilir', counted: 'Sayılan', codes: 'Kod',
   empty: 'Henüz bir şey okutulmadı', needWarehouse: 'Depo seçin', needTarget: 'Hedef depoyu seçin',
   inventoryApplied: 'Fazlalar girildi, eksikler düşüldü', cameraError: 'Kameraya erişilemiyor (HTTPS ve izin gerekli)',
+  sharedBarcode: 'Bu barkod başka ürünlerde de var',
   lang: 'Русский',
 };
 

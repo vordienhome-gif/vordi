@@ -1,5 +1,5 @@
 import type { Product, Variant } from '@vordi/contracts';
-import { and, eq, ilike, inArray, notInArray, or, sql } from 'drizzle-orm';
+import { and, eq, ilike, inArray, ne, notInArray, or, sql } from 'drizzle-orm';
 import type { DbOrTx } from '../db/index.ts';
 import { barcodes, prices, products, variants } from '../db/schema.ts';
 import { HttpError, notFound } from '../lib/errors.ts';
@@ -81,7 +81,7 @@ export async function saveProduct(tx: DbOrTx, input: ProductData, id?: number): 
 
     await tx.delete(barcodes).where(eq(barcodes.variantId, vid));
     for (const code of new Set(v.barcodes)) {
-      const [taken] = await tx.select().from(barcodes).where(eq(barcodes.barcode, code));
+      const [taken] = await tx.select().from(barcodes).where(and(eq(barcodes.barcode, code), ne(barcodes.variantId, vid)));
       if (taken) throw new HttpError(409, `Штрихкод ${code} уже используется`, 'barcode_taken');
       await tx.insert(barcodes).values({ barcode: code, variantId: vid });
     }

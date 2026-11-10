@@ -158,3 +158,14 @@ describe('FIFO kalan stok değeri ve sayım', () => {
     expect(() => postDocument({ id: 1, type: 'inventory', moment, warehouseId: 1, lines: [{ variantId: 1, qty: 0, price: 0 }] })).not.toThrow();
   });
 });
+
+describe('düzeltme ve bilgi belgeleri', () => {
+  it('cari düzeltmesi işaretli tutarı aynen yazar', () => {
+    expect(postDocument({ id: 1, type: 'counterpartyadjustment', moment, counterpartyId: 3, sum: -500, lines: [] }).settlement[0]!.amount).toBe(-500);
+    expect(() => postDocument({ id: 1, type: 'counterpartyadjustment', moment, counterpartyId: 3, sum: 0, lines: [] })).toThrow(/нулевой/);
+  });
+  it('vardiya ve komisyoncu raporu defterlere yazmaz', () => {
+    const r = postDocument({ id: 2, type: 'retailshift', moment, lines: [] });
+    expect([r.stock, r.settlement, r.money]).toEqual([[], [], []]);
+  });
+});

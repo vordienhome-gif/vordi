@@ -41,6 +41,7 @@ export function Lookup({ warehouses, onBack }: { warehouses: Warehouse[]; onBack
         <section className="card">
           <h2>{result.product.name}{result.variant.name ? ` · ${result.variant.name}` : ''}</h2>
           {result.product.article && <p className="muted">{result.product.article}</p>}
+          {!!result.alternatives?.length && <p className="error">{t.sharedBarcode}: {result.alternatives.map((a) => `${a.productName} ${a.variantName}`.trim()).join('; ')}</p>}
           <table className="table">
             <thead><tr><th>{t.warehouse}</th><th>{t.stock}</th><th>{t.reserve}</th><th>{t.available}</th></tr></thead>
             <tbody>

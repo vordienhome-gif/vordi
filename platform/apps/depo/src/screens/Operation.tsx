@@ -39,6 +39,7 @@ export function OperationScreen({ op, warehouses, onBack }: { op: Operation; war
           const r = applyScan(d, res, code);
           if (r.outcome.kind === 'need_code') say(false, `${t.needCode}: ${r.outcome.productName}`);
           else if (r.outcome.kind === 'duplicate_code') say(false, t.duplicateCode);
+          else if (res.alternatives?.length) say(false, `${r.outcome.line.productName} ${r.outcome.line.variantName} · ${r.outcome.line.qty}. ${t.sharedBarcode}: ${res.alternatives.map((a) => `${a.productName} ${a.variantName}`.trim()).join('; ')}`);
           else say(true, `${r.outcome.line.productName} ${r.outcome.line.variantName} · ${r.outcome.line.qty}`);
           return r.draft;
         });

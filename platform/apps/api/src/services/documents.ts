@@ -1,7 +1,7 @@
 import type { DocumentDto, DocumentInput as DocumentSchema, Me } from '@vordi/contracts';
 import {
   DOC_TYPES, DomainError, docType, gtinMatches, inventoryAdjustments, isDocType, parseMarkingCode, postDocument,
-  WAREHOUSE_DOC_TYPES, type DocType,
+  WAREHOUSE_DOC_TYPES, type DocType, type PostingResult,
 } from '@vordi/domain';
 import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import type { z } from 'zod';
@@ -149,20 +149,24 @@ export async function saveDocument(db: Db, user: Me, data: DocumentData, id?: nu
     }
 
     if (data.posted) {
-      const r = postDocument({ id: docId, type, moment, warehouseId: data.warehouseId, targetWarehouseId: data.targetWarehouseId,
+      await writeLedgers(tx, postDocument({ id: docId, type, moment, warehouseId: data.warehouseId, targetWarehouseId: data.targetWarehouseId,
         counterpartyId: data.counterpartyId, accountId: data.accountId, sum: data.sum,
-        lines: lines.map((l, i) => ({ ...l, lineId: lineIds[i] })) });
-      const m = new Date(moment);
-      if (r.stock.length) await tx.insert(stockMoves).values(r.stock.map((s) => ({ ...s, lineId: s.lineId ?? null, moment: m })));
-      if (r.settlement.length) await tx.insert(settlementMoves).values(r.settlement.map((s) => ({ ...s, moment: m })));
-      if (r.money.length) await tx.insert(moneyMoves).values(r.money.map((s) => ({ ...s, moment: m })));
+        lines: lines.map((l, i) => ({ ...l, lineId: lineIds[i] })) }));
     }
     await tx.insert(auditLog).values({ employeeId: user.id, action: data.posted ? 'save_posted' : 'save_draft', entity: 'document', entityId: docId, data: { type, number, sum } });
     return docId;
   });
 }
 
-async function clearLedgers(tx: DbOrTx, id: number) {
+/** İşlenmiş belgenin kayıtlarını defterlere yazar (stok, cari, para). */
+export async function writeLedgers(tx: DbOrTx, r: PostingResult) {
+  const at = (m: string) => new Date(m);
+  if (r.stock.length) await tx.insert(stockMoves).values(r.stock.map((s) => ({ ...s, lineId: s.lineId ?? null, moment: at(s.moment) })));
+  if (r.settlement.length) await tx.insert(settlementMoves).values(r.settlement.map((s) => ({ ...s, moment: at(s.moment) })));
+  if (r.money.length) await tx.insert(moneyMoves).values(r.money.map((s) => ({ ...s, moment: at(s.moment) })));
+}
+
+export async function clearLedgers(tx: DbOrTx, id: number) {
   await tx.delete(stockMoves).where(eq(stockMoves.documentId, id));
   await tx.delete(settlementMoves).where(eq(settlementMoves.documentId, id));
   await tx.delete(moneyMoves).where(eq(moneyMoves.documentId, id));

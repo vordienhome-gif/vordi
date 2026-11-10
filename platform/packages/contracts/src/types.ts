@@ -28,6 +28,8 @@ export interface ScanResult {
   product: Pick<Product, 'id' | 'name' | 'article' | 'unit' | 'markingType' | 'buyPrice'>;
   stock: { warehouseId: number; stock: number; reserve: number; available: number }[];
   markingCode?: { cis: string; gtin: string } | null;
+  /** Aynı barkod başka ürünlerde de varsa onlar. */
+  alternatives?: { variantId: number; productName: string; variantName: string }[];
 }
 
 export interface Counterparty {

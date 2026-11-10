@@ -117,7 +117,10 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
     }
     const candidates = [lookup];
     if (markingCode) candidates.push(lookup.replace(/^0+/, ''));
-    let [hit] = await db.select({ variantId: barcodes.variantId }).from(barcodes).where(inArray(barcodes.barcode, candidates));
+    const hits = await db.select({ variantId: barcodes.variantId }).from(barcodes)
+      .innerJoin(variants, eq(variants.id, barcodes.variantId))
+      .where(inArray(barcodes.barcode, candidates)).orderBy(variants.archived, barcodes.variantId);
+    let hit = hits[0];
     if (!hit) {
       [hit] = await db.select({ variantId: variants.id }).from(variants).innerJoin(products, eq(products.id, variants.productId))
         .where(and(eq(variants.archived, false), or(eq(variants.code, lookup), eq(products.code, lookup), eq(products.article, lookup)))).limit(1);
@@ -129,7 +132,13 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
     const stock = (await stockReport(db, {})).filter((r) => r.variantId === v!.id)
       .map((r) => ({ warehouseId: r.warehouseId, stock: r.stock, reserve: r.reserve, available: r.available }));
     const { id, name, article, unit, markingType, buyPrice } = product!;
-    return { variant, product: { id, name, article, unit, markingType, buyPrice }, stock, markingCode };
+    // Aynı barkod birden fazla üründeyse diğerleri de bildirilir (ör. takımın farklı renkleri).
+    const others = hits.slice(1).map((h) => h.variantId);
+    const alternatives = others.length
+      ? await db.select({ variantId: variants.id, productName: products.name, variantName: variants.name }).from(variants)
+          .innerJoin(products, eq(products.id, variants.productId)).where(inArray(variants.id, others))
+      : [];
+    return { variant, product: { id, name, article, unit, markingType, buyPrice }, stock, markingCode, alternatives };
   });
 
   // — Cariler (Контрагенты)

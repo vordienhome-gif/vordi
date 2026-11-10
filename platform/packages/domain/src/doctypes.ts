@@ -38,6 +38,12 @@ export const DOC_TYPES = {
   paymentout: { section: 'money', ru: 'Исходящий платёж', tr: 'Giden ödeme (banka)', prefix: 'ИС', counterparty: true, account: true, settle: 1, money: -1 },
   cashin: { section: 'money', ru: 'Приходный ордер', tr: 'Kasa tahsilat fişi', prefix: 'ПКО', counterparty: true, account: true, settle: -1, money: 1 },
   cashout: { section: 'money', ru: 'Расходный ордер', tr: 'Kasa tediye fişi', prefix: 'РКО', counterparty: true, account: true, settle: 1, money: -1 },
+  /** Cari bakiye düzeltmesi: tutar işaretlidir (+ cari bize borçlanır, − biz borçlanırız). */
+  counterpartyadjustment: { section: 'money', ru: 'Корректировка взаиморасчётов', tr: 'Cari bakiye düzeltmesi', prefix: 'КВ', counterparty: true, settle: 1, signedSum: true },
+
+  // — Bilgi belgeleri (defterlere yazmaz)
+  retailshift: { section: 'retail', ru: 'Смена', tr: 'Kasa vardiyası', prefix: 'СМ' },
+  commissionreportin: { section: 'sales', ru: 'Отчёт комиссионера', tr: 'Komisyoncu raporu', prefix: 'ОК', lines: true, counterparty: true },
 } as const satisfies Record<string, DocTypeDef>;
 
 export interface DocTypeDef {
@@ -58,6 +64,8 @@ export interface DocTypeDef {
   expected?: boolean;
   /** Bu belgedeki fiyat, FIFO maliyet katmanı oluşturur (alış fiyatı). */
   costSource?: boolean;
+  /** Satırsız belgede tutar eksi olabilir (düzeltme belgeleri). */
+  signedSum?: boolean;
 }
 
 export type DocType = keyof typeof DOC_TYPES;

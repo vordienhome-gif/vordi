@@ -73,8 +73,10 @@ export function postDocument(doc: PostableDocument): PostingResult {
       if (!ok) throw new DomainError('Количество должно быть больше нуля', 'bad_qty');
       if (l.price < 0) throw new DomainError('Цена не может быть отрицательной', 'bad_price');
     }
-  } else if (!(sum > 0)) {
+  } else if ((def.settle || def.money) && !def.signedSum && !(sum > 0)) {
     throw new DomainError('Сумма должна быть больше нуля', 'bad_sum');
+  } else if (def.signedSum && sum === 0) {
+    throw new DomainError('Сумма не может быть нулевой', 'bad_sum');
   }
 
   const stock: StockEntry[] = [];

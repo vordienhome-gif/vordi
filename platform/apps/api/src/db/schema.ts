@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
-  bigint, bigserial, boolean, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp, uniqueIndex,
+  bigint, bigserial, boolean, index, integer, jsonb, numeric, pgTable, primaryKey, serial, text, timestamp,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -22,6 +22,7 @@ export const employees = pgTable('employees', {
   role: text('role').notNull(),
   passwordHash: text('password_hash').notNull(),
   phone: text('phone'),
+  email: text('email'),
   position: text('position'),
   warehouseIds: integer('warehouse_ids').array().notNull().default(sql`'{}'`),
   active: boolean('active').notNull().default(true),
@@ -34,6 +35,36 @@ export const sessions = pgTable('sessions', {
   createdAt: createdAt(),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
 });
+
+/** Para birimleri. Kur = 1 birimin ruble karşılığı. Varsayılan (RUB) kur 1'dir. */
+export const currencies = pgTable('currencies', {
+  code: text('code').primaryKey(),
+  name: text('name'),
+  rate: numeric('rate', { precision: 18, scale: 6, mode: 'number' }).notNull().default(1),
+  isDefault: boolean('is_default').notNull().default(false),
+});
+
+/** Kendi şirketlerimiz (юрлица / ИП): belgeler bunlardan biri adına düzenlenir. */
+export const organizations = pgTable('organizations', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  inn: text('inn'),
+  kpp: text('kpp'),
+  address: text('address'),
+  archived: boolean('archived').notNull().default(false),
+});
+
+/**
+ * Dış sistem eşleştirmesi: МойСклад, pazaryerleri, siteler.
+ * Aynı kayıt tekrar aktarıldığında yeni kayıt açılmaz, mevcut kayıt güncellenir.
+ */
+export const externalRefs = pgTable('external_refs', {
+  source: text('source').notNull(),
+  entity: text('entity').notNull(),
+  externalId: text('external_id').notNull(),
+  localId: integer('local_id').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.source, t.entity, t.externalId] }), index('external_refs_local_idx').on(t.source, t.entity, t.localId)]);
 
 export const warehouses = pgTable('warehouses', {
   id: serial('id').primaryKey(),
@@ -53,6 +84,15 @@ export const priceTypes = pgTable('price_types', {
   name: text('name').notNull().unique(),
 });
 
+/** Satış noktaları (точки продаж): mağaza kasaları. */
+export const retailPoints = pgTable('retail_points', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  warehouseId: integer('warehouse_id').references(() => warehouses.id),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  archived: boolean('archived').notNull().default(false),
+});
+
 export const accounts = pgTable('money_accounts', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
@@ -64,7 +104,7 @@ export const products = pgTable('products', {
   folderId: integer('folder_id').references(() => folders.id),
   name: text('name').notNull(),
   article: text('article'),
-  code: text('code').unique(),
+  code: text('code'),
   unit: text('unit').notNull().default('шт'),
   vat: integer('vat'),
   isService: boolean('is_service').notNull().default(false),
@@ -75,7 +115,7 @@ export const products = pgTable('products', {
   attributes: jsonb('attributes').$type<Record<string, unknown>>().notNull().default({}),
   archived: boolean('archived').notNull().default(false),
   createdAt: createdAt(),
-}, (t) => [index('products_article_idx').on(t.article)]);
+}, (t) => [index('products_article_idx').on(t.article), index('products_code_idx').on(t.code)]);
 
 export const variants = pgTable('variants', {
   id: serial('id').primaryKey(),
@@ -86,15 +126,18 @@ export const variants = pgTable('variants', {
   archived: boolean('archived').notNull().default(false),
 }, (t) => [index('variants_product_idx').on(t.productId)]);
 
+/** Barkodlar. МойСклад'daki gibi aynı barkod birden fazla üründe olabilir (ör. bir takımın renkleri); okutmada uyarı verilir. */
 export const barcodes = pgTable('barcodes', {
-  barcode: text('barcode').primaryKey(),
+  barcode: text('barcode').notNull(),
   variantId: integer('variant_id').notNull().references(() => variants.id, { onDelete: 'cascade' }),
-}, (t) => [index('barcodes_variant_idx').on(t.variantId)]);
+}, (t) => [primaryKey({ columns: [t.barcode, t.variantId] }), index('barcodes_variant_idx').on(t.variantId)]);
 
 export const prices = pgTable('prices', {
   variantId: integer('variant_id').notNull().references(() => variants.id, { onDelete: 'cascade' }),
   priceTypeId: integer('price_type_id').notNull().references(() => priceTypes.id),
+  /** Fiyat, para biriminin en küçük biriminde (kopek, cent). */
   value: kopeks('value').notNull(),
+  currency: text('currency').notNull().default('RUB'),
 }, (t) => [primaryKey({ columns: [t.variantId, t.priceTypeId] })]);
 
 export const counterparties = pgTable('counterparties', {
@@ -121,6 +164,8 @@ export const documents = pgTable('documents', {
   moment: timestamp('moment', { withTimezone: true }).notNull(),
   posted: boolean('posted').notNull().default(false),
   status: text('status'),
+  organizationId: integer('organization_id').references(() => organizations.id),
+  retailPointId: integer('retail_point_id').references(() => retailPoints.id),
   warehouseId: integer('warehouse_id').references(() => warehouses.id),
   targetWarehouseId: integer('target_warehouse_id').references(() => warehouses.id),
   counterpartyId: integer('counterparty_id').references(() => counterparties.id),
@@ -134,7 +179,7 @@ export const documents = pgTable('documents', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   deleted: boolean('deleted').notNull().default(false),
 }, (t) => [
-  uniqueIndex('documents_type_number_uq').on(t.type, t.number),
+  index('documents_type_number_idx').on(t.type, t.number),
   index('documents_type_moment_idx').on(t.type, t.moment),
   index('documents_parent_idx').on(t.parentId),
 ]);
@@ -147,6 +192,9 @@ export const documentLines = pgTable('document_lines', {
   price: kopeks('price').notNull().default(0),
   discount: numeric('discount', { precision: 5, scale: 2, mode: 'number' }).notNull().default(0),
   expected: qty('expected'),
+  /** Müşteri siparişinde ayrılan miktar. Boşsa satırın tamamı rezerv sayılır. */
+  reserve: qty('reserve'),
+  vat: integer('vat'),
 }, (t) => [index('document_lines_doc_idx').on(t.documentId)]);
 
 /** Честный знак kodları (КИ), belge satırına bağlı. */

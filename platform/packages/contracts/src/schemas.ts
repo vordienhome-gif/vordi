@@ -88,7 +88,7 @@ export const DocumentInput = z.object({
   targetWarehouseId: id.nullable().optional(),
   counterpartyId: id.nullable().optional(),
   accountId: id.nullable().optional(),
-  sum: kopeks.nonnegative().nullable().optional(),
+  sum: kopeks.nullable().optional(),
   status: text(50).nullable().optional(),
   comment: text(5000).nullable().optional(),
   parentId: id.nullable().optional(),

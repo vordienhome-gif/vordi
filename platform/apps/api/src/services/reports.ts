@@ -26,10 +26,10 @@ export async function stockReport(db: DbOrTx, q: { warehouseId?: number; search?
     .where(whFilter ? inArray(stockMoves.warehouseId, whFilter) : undefined)
     .groupBy(stockMoves.variantId, stockMoves.warehouseId);
 
-  // Rezerv: işlenmiş, iptal/teslim edilmemiş müşteri siparişleri − bu siparişe bağlı işlenmiş sevkiyatlar.
+  // Rezerv: işlenmiş, kapanmamış müşteri siparişlerinde ayrılan miktar (satırda rezerv yoksa tamamı) − bu siparişe bağlı işlenmiş sevkiyatlar.
   const pending = async (orderType: 'customerorder' | 'purchaseorder', childType: 'demand' | 'supply') => {
     const res = (await db.execute(sql`
-      select l.variant_id, o.warehouse_id, greatest(sum(l.qty) - coalesce((
+      select l.variant_id, o.warehouse_id, greatest(sum(coalesce(l.reserve, l.qty)) - coalesce((
         select sum(cl.qty) from ${documentLines} cl join ${documents} c on c.id = cl.document_id
         where c.parent_id = o.id and c.type = ${childType} and c.posted and not c.deleted and cl.variant_id = l.variant_id
       ), 0), 0) as qty

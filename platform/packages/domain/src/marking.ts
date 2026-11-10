@@ -3,7 +3,14 @@
  * (01) 14 haneli GTIN + (21) seri + kripto kuyruğu (91/92/93). Gruplar arası GS (0x1D) ayırıcıdır.
  * Kodun benzersiz anahtarı (КИ / CIS) = 01 + GTIN + 21 + seri.
  */
-export const MARKING_TYPES = ['lp', 'shoes', 'perfumery', 'tires', 'cosmetics', 'water', 'milk', 'bio', 'other'] as const;
+/**
+ * Честный знак ürün grupları. МойСклад'daki trackingType değerlerinin küçük harfli karşılığı
+ * (LP_CLOTHES → lp_clothes, LP_LINENS → lp_linens …). 'lp' eski genel giyim değeridir.
+ */
+export const MARKING_TYPES = [
+  'lp', 'lp_clothes', 'lp_linens', 'shoes', 'perfumery', 'tires', 'electronics', 'cosmetics', 'water', 'milk', 'beer',
+  'otp', 'bicycle', 'wheelchairs', 'food_supplement', 'medical_devices', 'bio', 'other',
+] as const;
 export type MarkingType = (typeof MARKING_TYPES)[number];
 
 const GS = '\u001d';
