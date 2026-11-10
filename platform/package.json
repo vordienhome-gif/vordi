@@ -1,0 +1,16 @@
+{
+  "name": "vordi-platform",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter ./apps/* dev",
+    "dev:api": "pnpm --filter @vordi/api dev",
+    "dev:admin": "pnpm --filter @vordi/admin dev",
+    "dev:depo": "pnpm --filter @vordi/depo dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test"
+  }
+}
