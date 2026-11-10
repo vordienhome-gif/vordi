@@ -82,3 +82,5 @@ test/           node:test ile API, entegrasyon ve çeviri testleri
 ## Yol haritası
 
 МойСклад seviyesine giden adımlar, yasal gereklilikler (152-ФЗ, Честный знак, ЕГАИС, ЭДО) ve öncelik soruları için: [docs/YOL-HARITASI.md](docs/YOL-HARITASI.md)
+
+Toptan + perakende online satış platformu (yönetim paneli, B2B ve B2C siteleri, kargo/ödeme/pazaryeri entegrasyonları) ana planı: [docs/PLATFORM-PLANI.md](docs/PLATFORM-PLANI.md)
