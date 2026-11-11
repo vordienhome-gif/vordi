@@ -117,6 +117,11 @@ describe('МойСклад aktarımı (sahte veriyle)', () => {
     expect(rows.find((r) => r.productName === 'Доставка')).toBeUndefined(); // hizmet stoğa girmez
     expect(s.warnings['not_posted:missing_counterparty']).toBeUndefined(); // çalışandan kasa tahsilatı işlenir
 
+    // Kullanılmayan kurulum varsayılanları: fiyat türleri silinir, boş depo arşivlenir
+    const { priceTypes, warehouses } = await import('../src/db/schema.ts');
+    expect((await db.select().from(priceTypes)).map((p) => p.name).sort()).toEqual(['Опт $$', 'Цена продажи']);
+    expect((await db.select().from(warehouses)).find((w) => w.name === 'Основной склад')?.archived).toBe(true);
+
     // İkinci çalıştırma: aynı sayılar, kopya yok
     await importMoySklad(db, fakeMs(data, extra), quiet);
     expect((await stockReport(db, {})).length).toBe(rows.length);

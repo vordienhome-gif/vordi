@@ -28,14 +28,16 @@ export const FolderInput = z.object({ name: text().min(1), parentId: id.nullable
 export const PriceTypeInput = z.object({ name: text(100).min(1) });
 export const AccountInput = z.object({ name: text().min(1), kind: z.enum(['cash', 'bank']) });
 
+export const PriceValue = z.object({ value: kopeks.nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/).default('RUB') });
+
 export const VariantInput = z.object({
   id: id.optional(),
   /** Özellikler: { "Размер": "M", "Цвет": "Синий" } */
   characteristics: z.record(z.string().max(100), z.string().max(100)).default({}),
   code: text(64).optional().nullable(),
   barcodes: z.array(text(64).min(1)).default([]),
-  /** priceTypeId → kopek */
-  prices: z.record(z.string().regex(/^\d+$/), kopeks.nonnegative()).default({}),
+  /** priceTypeId → fiyat. Sayı verilirse ruble (kopek); dövizli fiyat için { value, currency: 'USD' }. */
+  prices: z.record(z.string().regex(/^\d+$/), z.union([kopeks.nonnegative(), PriceValue])).default({}),
 });
 
 export const ProductInput = z.object({
@@ -92,9 +94,12 @@ export const DocumentInput = z.object({
   status: text(50).nullable().optional(),
   comment: text(5000).nullable().optional(),
   parentId: id.nullable().optional(),
+  organizationId: id.nullable().optional(),
   posted: z.boolean().default(false),
   lines: z.array(DocumentLineInput).default([]),
 });
+
+export const ChangePasswordInput = z.object({ current: z.string().min(1).max(200), next: z.string().min(8).max(200) });
 
 export type LoginInput = z.infer<typeof LoginInput>;
 export type EmployeeInput = z.input<typeof EmployeeInput>;

@@ -128,7 +128,7 @@ export async function saveDocument(db: Db, user: Me, data: DocumentData, id?: nu
       warehouseId: def.warehouse ? (data.warehouseId ?? null) : null,
       targetWarehouseId: def.targetWarehouse ? (data.targetWarehouseId ?? null) : null,
       counterpartyId: data.counterpartyId ?? null, accountId: data.accountId ?? null, sum,
-      comment: data.comment ?? null, parentId: data.parentId ?? null, updatedAt: new Date(),
+      comment: data.comment ?? null, parentId: data.parentId ?? null, organizationId: data.organizationId ?? null, updatedAt: new Date(),
     };
     if (id) {
       await tx.update(documents).set(values).where(eq(documents.id, id));
@@ -190,7 +190,7 @@ export async function loadDocument(db: DbOrTx, id: number): Promise<DocumentDto>
   return {
     id: d.id, type: d.type as DocType, number: d.number, moment: d.moment.toISOString(), posted: d.posted, status: d.status,
     warehouseId: d.warehouseId, targetWarehouseId: d.targetWarehouseId, counterpartyId: d.counterpartyId, accountId: d.accountId,
-    sum: d.sum, comment: d.comment, parentId: d.parentId, createdBy: d.createdBy, updatedAt: d.updatedAt.toISOString(),
+    sum: d.sum, comment: d.comment, parentId: d.parentId, organizationId: d.organizationId, createdBy: d.createdBy, updatedAt: d.updatedAt.toISOString(),
     lines: lines.map(({ line, variantName, productName }) => ({
       id: line.id, variantId: line.variantId, qty: line.qty, price: line.price, discount: line.discount,
       sum: Math.round(line.qty * line.price * (1 - line.discount / 100)), expected: line.expected,
@@ -209,7 +209,7 @@ export function toInput(d: DocumentDto, patch: Partial<DocumentData> = {}): Docu
   return {
     type: d.type, moment: d.moment, warehouseId: d.warehouseId, targetWarehouseId: d.targetWarehouseId,
     counterpartyId: d.counterpartyId, accountId: d.accountId, sum: d.sum, status: d.status, comment: d.comment,
-    parentId: d.parentId, posted: d.posted,
+    parentId: d.parentId, organizationId: d.organizationId, posted: d.posted,
     lines: d.lines.map((l) => ({ variantId: l.variantId, qty: l.qty, price: l.price, discount: l.discount, codes: l.codes })),
     ...patch,
   };

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DomainError, docType, parseMarkingCode, postDocument, type DocType } from '@vordi/domain';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
 import type { Db, DbOrTx } from '../../db/index.ts';
 import {
@@ -390,5 +390,18 @@ export async function importMoySklad(db: Db, ms: MsClient, log: ImportLog, opts:
     await db.insert(numberSequences).values({ type: m.type, last }).onConflictDoUpdate({ target: numberSequences.type, set: { last: sql`greatest(${numberSequences.last}, ${last})` } });
   }
 
+  // 12. İlk kurulumun varsayılanları (МойСклад'da karşılığı yoksa ve hiç kullanılmadıysa) kaldırılır / arşivlenir.
+  const mappedPriceTypes = [...(refs.get('pricetype')?.values() ?? [])];
+  const unusedPriceTypes = await db.select({ id: priceTypes.id }).from(priceTypes).where(and(
+    notInArray(priceTypes.id, mappedPriceTypes.length ? mappedPriceTypes : [0]),
+    sql`not exists (select 1 from ${prices} where ${prices.priceTypeId} = ${priceTypes.id})`,
+    sql`not exists (select 1 from ${counterparties} where ${counterparties.priceTypeId} = ${priceTypes.id})`,
+  ));
+  if (unusedPriceTypes.length) await db.delete(priceTypes).where(inArray(priceTypes.id, unusedPriceTypes.map((r) => r.id)));
+  const mappedStores = [...(refs.get('store')?.values() ?? [])];
+  await db.update(warehouses).set({ archived: true }).where(and(
+    notInArray(warehouses.id, mappedStores.length ? mappedStores : [0]),
+    sql`not exists (select 1 from ${documents} where ${documents.warehouseId} = ${warehouses.id} or ${documents.targetWarehouseId} = ${warehouses.id})`,
+  ));
   return summary;
 }

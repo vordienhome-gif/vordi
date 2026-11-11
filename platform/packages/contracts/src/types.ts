@@ -4,6 +4,11 @@ import type { Role } from './schemas.ts';
 /** API yanıt tipleri. */
 export interface Me { id: number; login: string; name: string; role: Role; warehouseIds: number[] }
 export interface Warehouse { id: number; name: string; address: string | null; archived: boolean }
+export interface Organization { id: number; name: string; inn: string | null; kpp: string | null; archived: boolean }
+export interface Currency { code: string; name: string | null; rate: number; isDefault: boolean }
+export interface Account { id: number; name: string; kind: 'cash' | 'bank' }
+export interface Folder { id: number; parentId: number | null; name: string }
+export interface Employee extends Me { phone: string | null; email: string | null; position: string | null; active: boolean }
 export interface PriceType { id: number; name: string }
 
 export interface Variant {
@@ -13,7 +18,8 @@ export interface Variant {
   characteristics: Record<string, string>;
   code: string | null;
   barcodes: string[];
-  prices: Record<string, number>;
+  /** priceTypeId → { value (kopek/cent), currency } */
+  prices: Record<string, { value: number; currency: string }>;
 }
 export interface Product {
   id: number; name: string; article: string | null; code: string | null; folderId: number | null;
@@ -45,7 +51,7 @@ export interface DocumentLine {
 export interface DocumentDto {
   id: number; type: DocType; number: string; moment: string; posted: boolean; status: string | null;
   warehouseId: number | null; targetWarehouseId: number | null; counterpartyId: number | null; accountId: number | null;
-  sum: number; comment: string | null; parentId: number | null; createdBy: number | null; updatedAt: string;
+  sum: number; comment: string | null; parentId: number | null; organizationId: number | null; createdBy: number | null; updatedAt: string;
   lines: DocumentLine[];
 }
 

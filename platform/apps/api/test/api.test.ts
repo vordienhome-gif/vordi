@@ -176,3 +176,35 @@ describe('Честный знак', () => {
     expect(wrong.body.code).toBe('code_gtin');
   });
 });
+
+describe('panel uçları', () => {
+  it('dövizli fiyat ürün güncellenince korunur', async () => {
+    const p = await ok('POST', '/products', { body: { name: 'Плед', variants: [{ prices: { [retail]: 150000, [wholesale]: { value: 1500, currency: 'USD' } } }] } });
+    expect(p.variants[0].prices[String(wholesale)]).toEqual({ value: 1500, currency: 'USD' });
+    const u = await ok('PUT', `/products/${p.id}`, { body: { name: 'Плед 2', variants: [{ id: p.variants[0].id, prices: p.variants[0].prices }] } });
+    expect(u.variants[0].prices).toEqual({ [String(retail)]: { value: 150000, currency: 'RUB' }, [String(wholesale)]: { value: 1500, currency: 'USD' } });
+  });
+
+  it('şifre değiştirme: eski şifre doğrulanır, diğer oturumlar kapanır', async () => {
+    await ok('POST', '/employees', { body: { login: 'kassa', name: 'Кассир', role: 'cashier', password: 'kassa-pass-1' } });
+    const t1 = (await ok('POST', '/auth/login', { token: '', body: { login: 'kassa', password: 'kassa-pass-1' } })).token;
+    const t2 = (await ok('POST', '/auth/login', { token: '', body: { login: 'kassa', password: 'kassa-pass-1' } })).token;
+    expect((await call('POST', '/auth/password', { token: t1, body: { current: 'wrong', next: 'new-pass-123' } })).status).toBe(400);
+    expect((await call('POST', '/auth/password', { token: t1, body: { current: 'kassa-pass-1', next: 'new-pass-123' } })).status).toBe(204);
+    expect((await call('GET', '/auth/me', { token: t1 })).status).toBe(200);
+    expect((await call('GET', '/auth/me', { token: t2 })).status).toBe(401);
+    expect((await call('POST', '/auth/login', { token: '', body: { login: 'kassa', password: 'new-pass-123' } })).status).toBe(200);
+  });
+
+  it('belge listesi numara ve cariye göre süzülür; referans listeleri gelir', async () => {
+    const all = await ok('GET', '/documents?type=supply');
+    const first = all.rows[0];
+    const found = await ok('GET', `/documents?type=supply&search=${first.number}`);
+    expect(found.rows.every((d: { number: string }) => d.number.includes(first.number))).toBe(true);
+    const byCp = await ok('GET', `/documents?counterpartyId=${buyer}`);
+    expect(byCp.rows.length).toBeGreaterThan(0);
+    expect(byCp.rows.every((d: { counterpartyId: number }) => d.counterpartyId === buyer)).toBe(true);
+    expect(Array.isArray(await ok('GET', '/organizations'))).toBe(true);
+    expect(Array.isArray(await ok('GET', '/currencies'))).toBe(true);
+  });
+});

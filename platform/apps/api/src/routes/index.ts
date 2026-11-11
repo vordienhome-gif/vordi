@@ -1,5 +1,5 @@
 import {
-  AccountInput, CounterpartyInput, DocumentInput, EmployeeInput, FolderInput, LoginInput, PriceTypeInput, ProductInput,
+  AccountInput, ChangePasswordInput, CounterpartyInput, DocumentInput, EmployeeInput, FolderInput, LoginInput, PriceTypeInput, ProductInput,
   WarehouseInput, type ScanResult,
 } from '@vordi/contracts';
 import { DOC_TYPE_KEYS, isDocType, looksLikeMarkingCode, parseMarkingCode, type DocType } from '@vordi/domain';
@@ -8,8 +8,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireRole, user, type AppOptions } from '../app.ts';
 import {
-  accounts, auditLog, barcodes, counterparties, documents, employees, folders, priceTypes, products, sessions,
-  settlementMoves, variants, warehouses,
+  accounts, auditLog, barcodes, counterparties, currencies, documents, employees, folders, organizations, priceTypes, products,
+  retailPoints, sessions, settlementMoves, variants, warehouses,
 } from '../db/schema.ts';
 import { hashPassword, newToken, tokenHash, verifyPassword } from '../lib/auth.ts';
 import { forbidden, HttpError, notFound } from '../lib/errors.ts';
@@ -48,10 +48,22 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
     return reply.status(204).send();
   });
   app.get('/auth/me', { preHandler: anyone }, async (req) => user(req));
+  /** Kendi şifresini değiştirir; diğer tüm oturumlar kapanır. */
+  app.post('/auth/password', { preHandler: anyone, config: { rateLimit: { max: loginRateLimit, timeWindow: '1 minute' } } }, async (req, reply) => {
+    const { current, next } = ChangePasswordInput.parse(req.body);
+    const u = user(req);
+    const [e] = await db.select().from(employees).where(eq(employees.id, u.id));
+    if (!e || !(await verifyPassword(current, e.passwordHash))) throw new HttpError(400, 'Текущий пароль неверен', 'bad_password');
+    await db.update(employees).set({ passwordHash: await hashPassword(next) }).where(eq(employees.id, u.id));
+    const keep = tokenHash(req.headers.authorization!.slice(7));
+    await db.delete(sessions).where(and(eq(sessions.employeeId, u.id), sql`${sessions.tokenHash} <> ${keep}`));
+    await db.insert(auditLog).values({ employeeId: u.id, action: 'password_changed', entity: 'employee', entityId: u.id });
+    return reply.status(204).send();
+  });
 
   // — Çalışanlar (Сотрудники)
   const employeeDto = (e: typeof employees.$inferSelect) =>
-    ({ id: e.id, login: e.login, name: e.name, role: e.role, phone: e.phone, position: e.position, warehouseIds: e.warehouseIds, active: e.active });
+    ({ id: e.id, login: e.login, name: e.name, role: e.role, phone: e.phone, email: e.email, position: e.position, warehouseIds: e.warehouseIds, active: e.active });
   app.get('/employees', { preHandler: admins }, async () => (await db.select().from(employees).orderBy(employees.name)).map(employeeDto));
   app.post('/employees', { preHandler: admins }, async (req) => {
     const b = EmployeeInput.parse(req.body);
@@ -82,6 +94,9 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
   app.get('/accounts', { preHandler: managers }, async () => db.select().from(accounts).orderBy(accounts.id));
   app.post('/accounts', { preHandler: admins }, async (req) => (await db.insert(accounts).values(AccountInput.parse(req.body)).returning())[0]);
   app.get('/folders', { preHandler: anyone }, async () => db.select().from(folders).orderBy(folders.name));
+  app.get('/organizations', { preHandler: anyone }, async () => db.select().from(organizations).orderBy(organizations.id));
+  app.get('/currencies', { preHandler: anyone }, async () => db.select().from(currencies).orderBy(sql`${currencies.isDefault} desc`, currencies.code));
+  app.get('/retail-points', { preHandler: anyone }, async () => db.select().from(retailPoints).orderBy(retailPoints.id));
   app.post('/folders', { preHandler: managers }, async (req) => (await db.insert(folders).values(FolderInput.parse(req.body)).returning())[0]);
   app.get('/document-types', { preHandler: anyone }, async () => DOC_TYPE_LIST);
 
@@ -152,6 +167,11 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
       .from(counterparties).where(where).orderBy(counterparties.name).limit(q.limit).offset(q.offset);
     return { total, rows: rows.map((r) => ({ ...r.c, balance: Number(r.balance) })) };
   });
+  app.get('/counterparties/:id', { preHandler: managers }, async (req) => {
+    const [c] = await db.select().from(counterparties).where(eq(counterparties.id, IdParam.parse(req.params).id));
+    if (!c) throw notFound('Контрагент');
+    return c;
+  });
   app.post('/counterparties', { preHandler: managers }, async (req) => (await db.insert(counterparties).values(CounterpartyInput.parse(req.body)).returning())[0]);
   app.put('/counterparties/:id', { preHandler: managers }, async (req) => {
     const { id } = IdParam.parse(req.params);
@@ -162,12 +182,20 @@ export async function registerRoutes(app: FastifyInstance, { db, loginRateLimit 
 
   // — Belgeler (Документы)
   app.get('/documents', { preHandler: anyone }, async (req) => {
-    const q = Paging.extend({ type: z.string().optional() }).parse(req.query);
+    const q = Paging.extend({
+      type: z.string().optional(), search: z.string().max(100).optional(),
+      from: z.string().datetime({ offset: true }).optional(), to: z.string().datetime({ offset: true }).optional(),
+      counterpartyId: z.coerce.number().int().positive().optional(),
+    }).parse(req.query);
     const u = user(req);
     const allowed = DOC_TYPE_KEYS.filter((t) => canReadDocumentType(u, t));
     if (q.type && !(isDocType(q.type) && allowed.includes(q.type))) throw forbidden();
     const types = q.type ? [q.type] : allowed;
     const where = and(eq(documents.deleted, false), inArray(documents.type, types),
+      q.search ? ilike(documents.number, `%${q.search.trim()}%`) : undefined,
+      q.from ? sql`${documents.moment} >= ${new Date(q.from)}` : undefined,
+      q.to ? sql`${documents.moment} <= ${new Date(q.to)}` : undefined,
+      q.counterpartyId ? eq(documents.counterpartyId, q.counterpartyId) : undefined,
       u.role !== 'admin' && u.role !== 'manager' && u.warehouseIds.length ? inArray(documents.warehouseId, u.warehouseIds) : undefined);
     const [{ total } = { total: 0 }] = await db.select({ total: count() }).from(documents).where(where);
     const ids = await db.select({ id: documents.id }).from(documents).where(where).orderBy(desc(documents.moment), desc(documents.id)).limit(q.limit).offset(q.offset);

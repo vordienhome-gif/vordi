@@ -24,7 +24,7 @@ export async function loadProducts(db: DbOrTx, ids: number[]): Promise<Product[]
     const variant: Variant = {
       id: v.id, productId: v.productId, name: v.name, characteristics: v.characteristics, code: v.code,
       barcodes: brows.filter((b) => b.variantId === v.id).map((b) => b.barcode),
-      prices: Object.fromEntries(prows.filter((p) => p.variantId === v.id).map((p) => [String(p.priceTypeId), p.value])),
+      prices: Object.fromEntries(prows.filter((p) => p.variantId === v.id).map((p) => [String(p.priceTypeId), { value: p.value, currency: p.currency }])),
     };
     vmap.set(v.productId, [...(vmap.get(v.productId) ?? []), variant]);
   }
@@ -86,7 +86,9 @@ export async function saveProduct(tx: DbOrTx, input: ProductData, id?: number): 
       await tx.insert(barcodes).values({ barcode: code, variantId: vid });
     }
     await tx.delete(prices).where(eq(prices.variantId, vid));
-    const priceRows = Object.entries(v.prices).map(([pt, value]) => ({ variantId: vid!, priceTypeId: Number(pt), value }));
+    const priceRows = Object.entries(v.prices).map(([pt, p]) => ({
+      variantId: vid!, priceTypeId: Number(pt), ...(typeof p === 'number' ? { value: p, currency: 'RUB' } : p),
+    }));
     if (priceRows.length) await tx.insert(prices).values(priceRows);
   }
   // Belgelerde kullanılmış olabileceği için silinmez, arşivlenir.
