@@ -1,0 +1,35 @@
+# HTTPS sertifikaları Let's Encrypt'ten otomatik alınır ve yenilenir.
+{
+	email {$ACME_EMAIL}
+}
+
+(common) {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(self), microphone=(), geolocation=()"
+		-Server
+	}
+	# API aynı alan adında /api altında: tarayıcı için CORS gerekmez.
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+	handle {
+		root * {args[0]}
+		try_files {path} /index.html
+		file_server
+	}
+	@shell path / /index.html /sw.js /manifest.webmanifest
+	header @shell Cache-Control "no-cache"
+}
+
+{$PANEL_DOMAIN} {
+	import common /srv/admin
+}
+
+{$DEPO_DOMAIN} {
+	import common /srv/depo
+}

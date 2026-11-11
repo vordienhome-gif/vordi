@@ -1,0 +1,76 @@
+# Üretim kurulumu: docker compose up -d --build   (değerler .env dosyasından)
+name: vordi
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vordi
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: vordi
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vordi"]
+      interval: 10s
+      retries: 10
+    # Dışarıya port açılmaz: yalnızca iç ağdan erişilir.
+
+  api:
+    build: { context: .., target: api }
+    restart: unless-stopped
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://vordi:${POSTGRES_PASSWORD}@postgres:5432/vordi
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD:?}
+      CORS_ORIGINS: ""
+      TZ: Europe/Moscow
+
+  caddy:
+    build: { context: .., target: caddy }
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?}
+      PANEL_DOMAIN: ${PANEL_DOMAIN:?}
+      DEPO_DOMAIN: ${DEPO_DOMAIN:?}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  # Günlük veritabanı yedeği; son 14 gün sunucuda saklanır. Sunucu dışına kopya: DEPLOY.md.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # API sağlıklı = migration'lar uygulandı; yedek ondan sonra başlar.
+    depends_on:
+      api: { condition: service_healthy }
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Europe/Moscow
+    volumes:
+      - ./backups:/backups
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    configs:
+      - source: backup_script
+        target: /backup.sh
+
+configs:
+  backup_script:
+    content: |
+      while true; do
+        f=/backups/vordi-$$(date +%F-%H%M).dump
+        if pg_dump -h postgres -U vordi -Fc vordi > "$$f.tmp"; then mv "$$f.tmp" "$$f"; echo "yedek alındı: $$f"; else echo "YEDEK HATASI"; fi
+        find /backups -name 'vordi-*.dump' -mtime +14 -delete
+        sleep 86400
+      done
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

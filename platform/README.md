@@ -39,6 +39,10 @@ docker compose up -d postgres
 DATABASE_URL=postgres://vordi:vordi@localhost:5432/vordi pnpm dev
 ```
 
+## Sunucuya kurulum
+
+Tek komutla kurulum (Docker, HTTPS, güvenlik duvarı, günlük yedek) ve sağlayıcı önerisi: [deploy/DEPLOY.md](deploy/DEPLOY.md).
+
 ## МойСклад'dan aktarım
 
 МойСклад'daki her şeyi (para birimleri, tüzel kişiler, depolar, fiyat türleri, ürün grupları, cariler, çalışanlar, ürünler, hizmetler, modifikasyonlar, barkodlar, fiyatlar, satış noktaları ve 21 türde tüm belgeler) aktarır, sonra iki sistemi karşılaştırır.
